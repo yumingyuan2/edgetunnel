@@ -99,7 +99,7 @@ export default {
 			fakeUserID = fakeUserIDMD5.slice(0, 8) + "-" + fakeUserIDMD5.slice(8, 12) + "-" + fakeUserIDMD5.slice(12, 16) + "-" + fakeUserIDMD5.slice(16, 20) + "-" + fakeUserIDMD5.slice(20);
 			fakeHostName = fakeUserIDMD5.slice(6, 9) + "." + fakeUserIDMD5.slice(13, 19);
 			//console.log(`虚假UUID: ${fakeUserID}`); // 打印fakeID
-			if (env.TOKEN) userID = await generateDynamicUUID(env.TOKEN);
+			if (env.KEY) userID = await generateDynamicUUID(env.KEY);
 			effectiveTime = env.TIME || effectiveTime;
 			updateTime = env.UPTIME || updateTime;
 			proxyIP = env.PROXYIP || proxyIP;
@@ -163,7 +163,7 @@ export default {
 				} else if (路径 == `/${fakeUserID}`) {
 					const fakeConfig = await getVLESSConfig(userID, request.headers.get('Host'), sub, 'CF-Workers-SUB', RproxyIP, url, env);
 					return new Response(`${fakeConfig}`, { status: 200 });
-				} else if (路径 == `/${env.TOKEN}` || 路径 == `/${userID}`) {
+				} else if (路径 == `/${env.KEY}` || 路径 == `/${userID}`) {
 					await sendMessage(`#获取订阅 ${FileName}`, request.headers.get('CF-Connecting-IP'), `UA: ${UA}</tg-spoiler>\n域名: ${url.hostname}\n<tg-spoiler>入口: ${url.pathname + url.search}</tg-spoiler>`);
 					const vlessConfig = await getVLESSConfig(userID, request.headers.get('Host'), sub, UA, RproxyIP, url, env);
 					const now = Date.now();
@@ -1333,7 +1333,7 @@ let subParams = ['sub','base64','b64','clash','singbox','sb'];
  * @returns {Promise<string>}
  */
 async function getVLESSConfig(userID, hostName, sub, UA, RproxyIP, _url, env) {
-	const uuid = (_url.pathname == `/${env.TOKEN}`) ? env.TOKEN : userID;
+	const uuid = (_url.pathname == `/${env.KEY}`) ? env.KEY : userID;
 	checkSUB(hostName);
 	const userAgent = UA.toLowerCase();
 	const Config = 配置信息(userID , hostName);
@@ -1396,7 +1396,7 @@ async function getVLESSConfig(userID, hostName, sub, UA, RproxyIP, _url, env) {
 			订阅器 += `\nSUB（优选订阅生成器）: ${sub}`;
 		}
 
-		if (env.TOKEN && _url.pathname !== `/${env.TOKEN}`) 订阅器 = '';
+		if (env.KEY && _url.pathname !== `/${env.KEY}`) 订阅器 = '';
 		else 订阅器 += `\nSUBAPI（订阅转换后端）: ${subProtocol}://${subconverter}\nSUBCONFIG（订阅转换配置文件）: ${subconfig}`;
 		const 动态UUID = (uuid != userID) ? `TOKEN: ${uuid}\nTIME（动态UUID有效时间）: ${effectiveTime} 天\nUPTIME（动态UUID更新时间）: ${updateTime} 时（北京时间）\n\n` : "";
 		return `
@@ -1447,7 +1447,6 @@ https://github.com/cmliu/edgetunnel
 ################################################################
 `;
 	} else {
-		if (userID != uuid) userID = await generateDynamicUUID(userID);
 		if (typeof fetch != 'function') {
 			return 'Error: fetch is not available in this environment.';
 		}
