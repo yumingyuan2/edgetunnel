@@ -150,7 +150,8 @@ export default {
 			FileName = env.SUBNAME || FileName;
 			if (url.searchParams.has('notls')) noTLS = 'true';
 			if (!upgradeHeader || upgradeHeader !== 'websocket') {
-				if (url.pathname == '/') {
+				const 路径 = url.pathname.toLowerCase();
+				if (路径 == '/') {
 					if (env.URL302) return Response.redirect(env.URL302, 302);
 					else if (env.URL) return await proxyURL(env.URL, url);
 					else return new Response(JSON.stringify(request.cf, null, 4), {
@@ -159,10 +160,10 @@ export default {
 							'content-type': 'application/json',
 						},
 					});
-				} else if (url.pathname == `/${fakeUserID}`) {
+				} else if (路径 == `/${fakeUserID}`) {
 					const fakeConfig = await getVLESSConfig(userID, request.headers.get('Host'), sub, 'CF-Workers-SUB', RproxyIP, url, env);
 					return new Response(`${fakeConfig}`, { status: 200 });
-				} else if (url.pathname == `/${env.TOKEN}` || url.pathname == `/${userID}`) {
+				} else if (路径 == `/${env.TOKEN}` || 路径 == `/${userID}`) {
 					await sendMessage(`#获取订阅 ${FileName}`, request.headers.get('CF-Connecting-IP'), `UA: ${UA}</tg-spoiler>\n域名: ${url.hostname}\n<tg-spoiler>入口: ${url.pathname + url.search}</tg-spoiler>`);
 					const vlessConfig = await getVLESSConfig(userID, request.headers.get('Host'), sub, UA, RproxyIP, url, env);
 					const now = Date.now();
@@ -1397,7 +1398,7 @@ async function getVLESSConfig(userID, hostName, sub, UA, RproxyIP, _url, env) {
 
 		if (env.TOKEN && _url.pathname !== `/${env.TOKEN}`) 订阅器 = '';
 		else 订阅器 += `\nSUBAPI（订阅转换后端）: ${subProtocol}://${subconverter}\nSUBCONFIG（订阅转换配置文件）: ${subconfig}`;
-		const 动态UUID = (uuid != userID) ? `TOKEN: ${uuid}\n动态UUID有效时间: ${effectiveTime} 天\n动态UUID更新时间: ${updateTime} 时(北京时间)\n\n` : "";
+		const 动态UUID = (uuid != userID) ? `TOKEN: ${uuid}\nTIME（动态UUID有效时间）: ${effectiveTime} 天\nUPTIME（动态UUID更新时间）: ${updateTime} 时（北京时间）\n\n` : "";
 		return `
 ################################################################
 Subscribe / sub 订阅地址, 支持 Base64、clash-meta、sing-box 订阅格式
