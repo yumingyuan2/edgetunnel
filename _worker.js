@@ -429,7 +429,6 @@ async function handleTCPOutBound(remoteSocket, addressType, addressRemote, portR
 			// 否则，尝试使用预设的代理 IP（如果有）或原始地址重试连接
 			if (!proxyIP || proxyIP == '') {
 				proxyIP = atob('cHJveHlpcC50cDEuY21saXVzc3NzLmNvbQ==');
-				portRemote = proxyIP.split('tp')[1].split('.')[0] || portRemote;
 			} else if (proxyIP.includes(']:')) {
 				portRemote = proxyIP.split(']:')[1] || portRemote;
 				proxyIP = proxyIP.split(']:')[0] || proxyIP;
@@ -437,6 +436,7 @@ async function handleTCPOutBound(remoteSocket, addressType, addressRemote, portR
 				portRemote = proxyIP.split(':')[1] || portRemote;
 				proxyIP = proxyIP.split(':')[0] || proxyIP;
 			}
+			if (proxyIP.includes('.tp')) portRemote = proxyIP.split('.tp')[1].split('.')[0] || portRemote;
 			tcpSocket = await connectAndWrite(proxyIP || addressRemote, portRemote);
 		}
 		// 无论重试是否成功，都要关闭 WebSocket（可能是为了重新建立连接）
