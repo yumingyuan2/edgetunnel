@@ -79,6 +79,7 @@ let RproxyIP = 'false';
 let httpsPorts = ["2053","2083","2087","2096","8443"];
 let effectiveTime = 7;//有效时间 单位:天
 let updateTime = 3;//更新时间
+let userIDLow;
 export default {
 	/**
 	 * @param {import("@cloudflare/workers-types").Request} request
@@ -99,7 +100,12 @@ export default {
 			fakeUserID = fakeUserIDMD5.slice(0, 8) + "-" + fakeUserIDMD5.slice(8, 12) + "-" + fakeUserIDMD5.slice(12, 16) + "-" + fakeUserIDMD5.slice(16, 20) + "-" + fakeUserIDMD5.slice(20);
 			fakeHostName = fakeUserIDMD5.slice(6, 9) + "." + fakeUserIDMD5.slice(13, 19);
 			//console.log(`虚假UUID: ${fakeUserID}`); // 打印fakeID
-			if (env.KEY) userID = await generateDynamicUUID(env.KEY);
+			if (env.KEY) {
+				const userIDs = await generateDynamicUUID(env.KEY);
+				userID = userIDs[0];
+				userIDLow = userIDs[1];
+				console.log(`启用动态UUID\n秘钥KEY: ${env.KEY}\nUUIDNow: ${userID}\nUUIDLow: ${userIDLow}`);
+			}
 			effectiveTime = env.TIME || effectiveTime;
 			updateTime = env.UPTIME || updateTime;
 			proxyIP = env.PROXYIP || proxyIP;
@@ -422,7 +428,8 @@ async function handleTCPOutBound(remoteSocket, addressType, addressRemote, portR
 		} else {
 			// 否则，尝试使用预设的代理 IP（如果有）或原始地址重试连接
 			if (!proxyIP || proxyIP == '') {
-				proxyIP = atob('cHJveHlpcC5meHhrLmRlZHluLmlv');
+				proxyIP = atob('cHJveHlpcC51cy50cDEuY21saXVzc3NzLmNvbQ==');
+				portRemote = proxyIP.split('tp')[1].split('.')[0] || portRemote;
 			} else if (proxyIP.includes(']:')) {
 				portRemote = proxyIP.split(']:')[1] || portRemote;
 				proxyIP = proxyIP.split(']:')[0] || proxyIP;
@@ -563,9 +570,15 @@ function processVlessHeader(vlessBuffer, userID) {
 	let isUDP = false;
 
 	// 验证用户 ID（接下来的 16 个字节）
-	if (stringify(new Uint8Array(vlessBuffer.slice(1, 17))) === userID) {
-		isValidUser = true;
+	function isUserIDValid(userID, userIDLow, buffer) {
+		const userIDArray = new Uint8Array(buffer.slice(1, 17));
+		const userIDString = stringify(userIDArray);
+		return userIDString === userID || userIDString === userIDLow;
 	}
+
+	// 使用函数验证
+	isValidUser = isUserIDValid(userID, userIDLow, vlessBuffer);
+
 	// 如果用户 ID 无效，返回错误
 	if (!isValidUser) {
 		return {
@@ -1398,7 +1411,7 @@ async function getVLESSConfig(userID, hostName, sub, UA, RproxyIP, _url, env) {
 
 		if (env.KEY && _url.pathname !== `/${env.KEY}`) 订阅器 = '';
 		else 订阅器 += `\nSUBAPI（订阅转换后端）: ${subProtocol}://${subconverter}\nSUBCONFIG（订阅转换配置文件）: ${subconfig}`;
-		const 动态UUID = (uuid != userID) ? `TOKEN: ${uuid}\nTIME（动态UUID有效时间）: ${effectiveTime} 天\nUPTIME（动态UUID更新时间）: ${updateTime} 时（北京时间）\n\n` : "";
+		const 动态UUID = (uuid != userID) ? `TOKEN: ${uuid}\nUUIDNow: ${userID}\nUUIDLow: ${userIDLow}\nTIME（动态UUID有效时间）: ${effectiveTime} 天\nUPTIME（动态UUID更新时间）: ${updateTime} 时（北京时间）\n\n` : "";
 		return `
 ################################################################
 Subscribe / sub 订阅地址, 支持 Base64、clash-meta、sing-box 订阅格式
@@ -1913,13 +1926,9 @@ function generateDynamicUUID(key) {
 	// 获取当前时间是当年的第几周（以北京时间凌晨3点为界）
 	function getWeekOfYear() {
 		const now = new Date();
-		
-		// 调整时间，将UTC时间转换为北京时间（加8小时）
 		const timezoneOffset = 8; // 北京时间相对于UTC的时区偏移+8小时
 		const adjustedNow = new Date(now.getTime() + timezoneOffset * 60 * 60 * 1000);
-
-		// 获取今年的第一天，并调整为北京时间凌晨3点
-		const start = new Date(adjustedNow.getFullYear(), 0, 1, updateTime, 0, 0); // 北京时间1月1日的凌晨3点
+		const start = new Date(2007, 6, 7, 3, 0, 0); // 固定起始日期为2007年7月7日的凌晨3点
 
 		// 计算当前时间与今年1月1日凌晨3点的差距
 		const diff = adjustedNow - start;
@@ -1928,26 +1937,27 @@ function generateDynamicUUID(key) {
 		const oneWeek = 1000 * 60 * 60 * 24 * effectiveTime;
 
 		// 返回当前是第几周，向上取整
-		return Math.ceil(diff / oneWeek);
+		return [Math.ceil(diff / oneWeek), Math.ceil((diff / oneWeek)- 1)];
 	}
 	
-	const passwdTime = getWeekOfYear(); // 获取当前周数并存储
+    const passwdTimes = getWeekOfYear(); // 获取当前周数并存储
+    const passwdTime = passwdTimes[0];
+    const passwdTimeLow = passwdTimes[1];
 
-	// 使用秘钥和当前周数拼接作为哈希的基础字符串
-	const baseString = key + passwdTime;
+    // 生成 UUID 的辅助函数
+    function generateUUID(baseString) {
+        const hashBuffer = new TextEncoder().encode(baseString);
+        return crypto.subtle.digest('SHA-256', hashBuffer).then((hash) => {
+            const hashArray = Array.from(new Uint8Array(hash));
+            const hexHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            let uuid = hexHash.substr(0, 8) + '-' + hexHash.substr(8, 4) + '-4' + hexHash.substr(13, 3) + '-' + (parseInt(hexHash.substr(16, 2), 16) & 0x3f | 0x80).toString(16) + hexHash.substr(18, 2) + '-' + hexHash.substr(20, 12);
+            return uuid;
+        });
+    }
 
-	// 将字符串转换为哈希值（可以用SHA-256等）
-	const hashBuffer = new TextEncoder().encode(baseString);
-
-	// 使用crypto.subtle API生成SHA-256哈希值
-	return crypto.subtle.digest('SHA-256', hashBuffer).then((hash) => {
-		// 将哈希值转换为一个合格的UUID4
-		const hashArray = Array.from(new Uint8Array(hash));
-		const hexHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-		// UUID4 格式要求特定的几位必须是4和8/b
-		let uuid = hexHash.substr(0, 8) + '-' + hexHash.substr(8, 4) + '-4' + hexHash.substr(13, 3) + '-' + (parseInt(hexHash.substr(16, 2), 16) & 0x3f | 0x80).toString(16) + hexHash.substr(18, 2) + '-' + hexHash.substr(20, 12);
-
-		return uuid;
-	});
+	// 生成两个 UUID
+	const currentUUIDPromise = generateUUID(key + passwdTime);
+	const previousUUIDPromise = generateUUID(key + passwdTimeLow);
+	
+	return Promise.all([currentUUIDPromise, previousUUIDPromise]);
 }
