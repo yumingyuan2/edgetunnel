@@ -104,7 +104,7 @@ export default {
 				const userIDs = await generateDynamicUUID(env.KEY);
 				userID = userIDs[0];
 				userIDLow = userIDs[1];
-				console.log(`启用动态UUID\n秘钥KEY: ${env.KEY}\nUUIDNow: ${userID}\nUUIDLow: ${userIDLow}`);
+				//console.log(`启用动态UUID\n秘钥KEY: ${env.KEY}\nUUIDNow: ${userID}\nUUIDLow: ${userIDLow}`);
 				effectiveTime = env.TIME || effectiveTime;
 				updateTime = env.UPTIME || updateTime;
 			}
