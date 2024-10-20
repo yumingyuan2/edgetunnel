@@ -105,9 +105,9 @@ export default {
 				userID = userIDs[0];
 				userIDLow = userIDs[1];
 				console.log(`启用动态UUID\n秘钥KEY: ${env.KEY}\nUUIDNow: ${userID}\nUUIDLow: ${userIDLow}`);
+				effectiveTime = env.TIME || effectiveTime;
+				updateTime = env.UPTIME || updateTime;
 			}
-			effectiveTime = env.TIME || effectiveTime;
-			updateTime = env.UPTIME || updateTime;
 			proxyIP = env.PROXYIP || proxyIP;
 			proxyIPs = await ADD(proxyIP);
 			proxyIP = proxyIPs[Math.floor(Math.random() * proxyIPs.length)];
