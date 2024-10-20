@@ -1268,16 +1268,16 @@ function checkSUB(host) {
 		addresses = [
 			'Join.my.Telegram.channel.CMLiussss.to.unlock.more.premium.nodes.cf.090227.xyz#加入我的频道t.me/CMLiussss解锁更多优选节点',
 			'visa.cn:443',
-			'www.visa.com:8443',
-			'cis.visa.com:2053',
-			'africa.visa.com:2083',
-			'www.visa.com.sg:2087',
-			'www.visaeurope.at:2096',
-			'www.visa.com.mt:8443',
-			'qa.visamiddleeast.com',
+			'singapore.com:8443',
+			'japan.com:2053',
+			'brazil.com:2083',
+			'russia.com:2087',
+			'www.gov.ua:2096',
+			'www.gco.gov.qa:8443',
+			'www.gov.se',
 			'time.is',
 			'www.wto.org:8443',
-			'chatgpt.com:2087',
+			'fbi.gov:2087',
 			'icook.hk',
 			//'104.17.0.0#IPv4',
 			'[2606:4700::]#IPv6'
@@ -1285,9 +1285,9 @@ function checkSUB(host) {
 		if (host.includes(".workers.dev")) addressesnotls = [
 			'usa.visa.com:2095',
 			'myanmar.visa.com:8080',
-			'www.visa.com.tw:8880',
+			'dynadot.com:8880',
 			'www.visaeurope.ch:2052',
-			'www.visa.com.br:2082',
+			'shopify.com:2082',
 			'www.visasoutheasteurope.com:2086'
 		];
 	}
