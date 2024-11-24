@@ -80,6 +80,7 @@ let effectiveTime = 7;//有效时间 单位:天
 let updateTime = 3;//更新时间
 let userIDLow;
 let userIDTime = "";
+/*Obfuscate-cmliu*/
 if (!isValidUUID(userID)) {
 	throw new Error('uuid is not valid');
 }
