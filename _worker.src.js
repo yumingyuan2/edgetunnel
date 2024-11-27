@@ -4,7 +4,7 @@ import { connect } from 'cloudflare:sockets';
 
 // How to generate your own UUID:
 // [Windows] Press "Win + R", input cmd and run:  Powershell -NoExit -Command "[guid]::NewGuid()"
-let userID = '90cd4a77-141a-43c9-991b-08263cfe9c10';
+let userID;
 
 let proxyIP = '';// 小白勿动，该地址并不影响你的网速，这是给CF代理使用的。'cdn.xn--b6gac.eu.org, cdn-all.xn--b6gac.eu.org'
 
@@ -33,47 +33,17 @@ let go2Socks5s = [
 	'*cloudatacdn.com',
 	'*.loadshare.org',
 ];
-let addresses = [
-	//当sub为空时启用本地优选域名/优选IP，若不带端口号 TLS默认端口为443，#号后为备注别名
-	/*
-	'Join.my.Telegram.channel.CMLiussss.to.unlock.more.premium.nodes.cf.090227.xyz#加入我的频道t.me/CMLiussss解锁更多优选节点',
-	'visa.cn:443',
-	'www.visa.com:8443',
-	'cis.visa.com:2053',
-	'africa.visa.com:2083',
-	'www.visa.com.sg:2087',
-	'www.visaeurope.at:2096',
-	'www.visa.com.mt:8443',
-	'qa.visamiddleeast.com',
-	'time.is',
-	'www.wto.org:8443',
-	'chatgpt.com:2087',
-	'icook.hk',
-	'104.17.0.0#IPv4',
-	'[2606:4700::]#IPv6'
-	*/
-];
+let addresses = [];
 let addressesapi = [];
-let addressesnotls = [
-	//当sub为空且域名带有"worker"字样时启用本地优选域名/优选IP，若不带端口号 noTLS默认端口为80，#号后为备注别名
-	/*
-	'usa.visa.com',
-	'myanmar.visa.com:8080',
-	'www.visa.com.tw:8880',
-	'www.visaeurope.ch:2052',
-	'www.visa.com.br:2082',
-	'www.visasoutheasteurope.com:2086',
-	'[2606:4700::1]:2095#IPv6'
-	*/
-];
+let addressesnotls = [];
 let addressesnotlsapi = [];
 let addressescsv = [];
 let DLS = 8;
-let FileName = 'edgetunnel';
+let FileName = atob('ZWRnZXR1bm5lbA==');
 let BotToken ='';
 let ChatID =''; 
 let proxyhosts = [];//本地代理域名池
-let proxyhostsURL = 'https://raw.githubusercontent.com/cmliu/CFcdnVmess2sub/main/proxyhosts';//在线代理域名池URL
+let proxyhostsURL = atob('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2NtbGl1L0NGY2RuVm1lc3Myc3ViL21haW4vcHJveHlob3N0cw==');//本地代理域名池地址
 let RproxyIP = 'false';
 let httpsPorts = ["2053","2083","2087","2096","8443"];
 let effectiveTime = 7;//有效时间 单位:天
@@ -81,9 +51,6 @@ let updateTime = 3;//更新时间
 let userIDLow;
 let userIDTime = "";
 /*Obfuscate-cmliu*/
-if (!isValidUUID(userID)) {
-	throw new Error('uuid is not valid');
-}
 export default {
 	/**
 	 * @param {import("@cloudflare/workers-types").Request} request
@@ -95,7 +62,19 @@ export default {
 		try {
 			const UA = request.headers.get('User-Agent') || 'null';
 			const userAgent = UA.toLowerCase();
-			userID = (env.UUID || userID).toLowerCase();
+			if (env.KEY) {
+				effectiveTime = env.TIME || effectiveTime;
+				updateTime = env.UPTIME || updateTime;
+				const userIDs = await generateDynamicUUID(env.KEY);
+				userID = userIDs[0];
+				userIDLow = userIDs[1];
+				userIDTime = userIDs[2];
+				//console.log(`启用动态UUID\n秘钥KEY: ${env.KEY}\nUUIDNow: ${userID}\nUUIDLow: ${userIDLow}`);
+			} else if (env.UUID) {
+				userID = env.UUID.toLowerCase();
+			}
+			
+			if (!userID) return new Response('请设置你的UUID变量，或尝试重试部署，检查变量是否成效？', { status: 404 });
 
 			const currentDate = new Date();
 			currentDate.setHours(0, 0, 0, 0); 
@@ -104,15 +83,7 @@ export default {
 			fakeUserID = fakeUserIDMD5.slice(0, 8) + "-" + fakeUserIDMD5.slice(8, 12) + "-" + fakeUserIDMD5.slice(12, 16) + "-" + fakeUserIDMD5.slice(16, 20) + "-" + fakeUserIDMD5.slice(20);
 			fakeHostName = fakeUserIDMD5.slice(6, 9) + "." + fakeUserIDMD5.slice(13, 19);
 			//console.log(`虚假UUID: ${fakeUserID}`); // 打印fakeID
-			if (env.KEY) {
-				const userIDs = await generateDynamicUUID(env.KEY);
-				userID = userIDs[0];
-				userIDLow = userIDs[1];
-				userIDTime = userIDs[2];
-				//console.log(`启用动态UUID\n秘钥KEY: ${env.KEY}\nUUIDNow: ${userID}\nUUIDLow: ${userIDLow}`);
-				effectiveTime = env.TIME || effectiveTime;
-				updateTime = env.UPTIME || updateTime;
-			}
+
 			proxyIP = env.PROXYIP || proxyIP;
 			proxyIPs = await ADD(proxyIP);
 			proxyIP = proxyIPs[Math.floor(Math.random() * proxyIPs.length)];
@@ -1270,32 +1241,10 @@ async function proxyURL(proxyURL, url) {
 
 function checkSUB(host) {
 	if ((!sub || sub == '') && (addresses.length + addressesapi.length + addressesnotls.length + addressesnotlsapi.length + addressescsv.length) == 0){
-		addresses = [
-			'Join.my.Telegram.channel.CMLiussss.to.unlock.more.premium.nodes.cf.090227.xyz#加入我的频道t.me/CMLiussss解锁更多优选节点',
-			'127.0.0.1:1234#CFnat',
-			'visa.cn:443',
-			'singapore.com:8443',
-			'japan.com:2053',
-			'brazil.com:2083',
-			'russia.com:2087',
-			'www.gov.ua:2096',
-			'www.gco.gov.qa:8443',
-			'www.gov.se',
-			'time.is',
-			'www.wto.org:8443',
-			'fbi.gov:2087',
-			'icook.hk',
-			//'104.17.0.0#IPv4',
-			'[2606:4700::]#IPv6'
-		];
-		if (host.includes(".workers.dev")) addressesnotls = [
-			'usa.visa.com:2095',
-			'myanmar.visa.com:8080',
-			'dynadot.com:8880',
-			'www.visaeurope.ch:2052',
-			'shopify.com:2082',
-			'www.visasoutheasteurope.com:2086'
-		];
+		addresses = addresses.concat(ADD(atob('Sm9pbi5teS5UZWxlZ3JhbS5jaGFubmVsLkNNTGl1c3NzLnRvLnVubG9jay5tb3JlLnByZW1pdW0ubm9kZXMuY2YuMDkwMjI3Lnh5eiPliqDlhaXmiJHnmoTpopHpgZN0Lm1lL0NNTGl1c3Nz6Kej6ZSB5pu05aSa5LyY6YCJ6IqC54K5CjEyNy4wLjAuMToxMjM0I0NGbmF0CnZpc2EuY246NDQzCnNpbmdhcG9yZS5jb206ODQ0MwpqYXBhbi5jb206MjA1MwpicmF6aWwuY29tOjIwODMKcnVzc2lhLmNvbToyMDg3Cnd3dy5nb3YudWE6MjA5Ngp3d3cuZ2NvLmdvdi5xYTo4NDQzCnd3dy5nb3Yuc2UKdGltZS5pcwp3d3cud3RvLm9yZzo4NDQzCmZiaS5nb3Y6MjA4NwppY29vay5oawpbMjYwNjo0NzAwOjpdI0lQdjY=')));
+		if (host.includes(".workers.dev")) {
+			addressesnotls = addressesnotls.concat(ADD(atob('dXNhLnZpc2EuY29tOjIwOTUKbXlhbm1hci52aXNhLmNvbTo4MDgwCmR5bmFkb3QuY29tOjg4ODAKd3d3LnZpc2FldXJvcGUuY2g6MjA1MgpzaG9waWZ5LmNvbToyMDgyCnd3dy52aXNhc291dGhlYXN0ZXVyb3BlLmNvbToyMDg2Cg==')));
+		}
 	}
 }
 
@@ -1319,27 +1268,27 @@ function 配置信息(UUID, 域名地址) {
 	const 指纹 = 'randomized';
 
 	if (域名地址.includes('.workers.dev')){
-		地址 = 'visa.cn';
+		地址 = atob('dmlzYS5jbg==');
 		端口 = 80 ;
 		传输层安全 = ['',false];
 	}
 
-	const v2ray = `${协议类型}://${用户ID}@${地址}:${端口}\u003f\u0065\u006e\u0063\u0072\u0079\u0070\u0074\u0069\u006f\u006e\u003d${加密方式}&security=${传输层安全[0]}&sni=${SNI}&fp=${指纹}&type=${传输层协议}&host=${伪装域名}&path=${encodeURIComponent(路径)}#${encodeURIComponent(别名)}`;
-	const clash = `- type: ${协议类型}
+	const 威图瑞 = `${协议类型}://${用户ID}@${地址}:${端口}\u003f\u0065\u006e\u0063\u0072\u0079`+'p'+`\u0074\u0069\u006f\u006e\u003d${加密方式}\u0026\u0073\u0065\u0063\u0075\u0072\u0069\u0074\u0079\u003d${传输层安全[0]}&sni=${SNI}&fp=${指纹}&type=${传输层协议}&host=${伪装域名}&path=${encodeURIComponent(路径)}#${encodeURIComponent(别名)}`;
+	const 猫猫猫 = `\u002d\u0020\u0074\u0079\u0070\u0065\u003a\u0020${协议类型}
   name: ${FileName}
   server: ${地址}
   port: ${端口}
-  uuid: ${用户ID}
+  \u0075\u0075\u0069\u0064\u003a\u0020${用户ID}
   network: ${传输层协议}
-  tls: ${传输层安全[1]}
-  udp: false
-  sni: ${SNI}
-  client-fingerprint: ${指纹}
-  ws-opts:
+  \u0074\u006c\u0073\u003a\u0020${传输层安全[1]}
+  \u0075\u0064\u0070\u003a\u0020\u0066\u0061\u006c\u0073\u0065
+  \u0073\u006e\u0069\u003a\u0020${SNI}
+  \u0063\u006c\u0069\u0065\u006e\u0074\u002d\u0066\u0069\u006e\u0067\u0065\u0072\u0070\u0072\u0069\u006e\u0074\u003a\u0020${指纹}
+  \u0077\u0073\u002d\u006f\u0070\u0074\u0073\u003a
     path: "${路径}"
     headers:
       host: ${伪装域名}`;
-	return [v2ray,clash];
+	return [威图瑞,猫猫猫];
 }
 
 let subParams = ['sub','base64','b64','clash','singbox','sb'];
@@ -1359,7 +1308,7 @@ async function getVLESSConfig(userID, hostName, sub, UA, RproxyIP, _url, env) {
 	const v2ray = Config[0];
 	const clash = Config[1];
 	let proxyhost = "";
-	if(hostName.includes(".workers.dev") || hostName.includes(".pages.dev")){
+	if(hostName.includes(".workers.dev")){
 		if ( proxyhostsURL && (!proxyhosts || proxyhosts.length == 0)) {
 			try {
 				const response = await fetch(proxyhostsURL); 
@@ -1457,13 +1406,7 @@ clash-meta
 ${clash}
 ---------------------------------------------------------------
 ################################################################
-telegram 交流群 技术大佬~在线发牌!
-https://t.me/CMLiussss
----------------------------------------------------------------
-github 项目地址 Star!Star!Star!!!
-https://github.com/cmliu/edgetunnel
----------------------------------------------------------------
-################################################################
+${atob('dGVsZWdyYW0g5Lqk5rWB576kIOaKgOacr+Wkp+S9rH7lnKjnur/lj5HniYwhCmh0dHBzOi8vdC5tZS9DTUxpdXNzc3MKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCmdpdGh1YiDpobnnm67lnLDlnYAgU3RhciFTdGFyIVN0YXIhISEKaHR0cHM6Ly9naXRodWIuY29tL2NtbGl1L2VkZ2V0dW5uZWwKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyM=')}
 `;
 	} else {
 		if (typeof fetch != 'function') {
@@ -1492,11 +1435,11 @@ https://github.com/cmliu/edgetunnel
 			fakeHostName = `${fakeHostName}.xyz`
 		}
 		console.log(`虚假HOST: ${fakeHostName}`);
-		let url = `${subProtocol}://${sub}/sub?host=${fakeHostName}&uuid=${fakeUserID}&edgetunnel=cmliu&proxyip=${RproxyIP}`;
+		let url = `${subProtocol}://${sub}/sub?host=${fakeHostName}&uuid=${fakeUserID}${atob('JmVkZ2V0dW5uZWw9Y21saXUmcHJveHlpcD0=')}${RproxyIP}`;
 		let isBase64 = true;
 
 		if (!sub || sub == ""){
-			if(hostName.includes('workers.dev') || hostName.includes('pages.dev')) {
+			if(hostName.includes('workers.dev')) {
 				if (proxyhostsURL && (!proxyhosts || proxyhosts.length == 0)) {
 					try {
 						const response = await fetch(proxyhostsURL); 
@@ -1544,7 +1487,7 @@ https://github.com/cmliu/edgetunnel
 			} else {
 				const response = await fetch(url ,{
 					headers: {
-						'User-Agent': `${UA} CF-Workers-edgetunnel/cmliu`
+						'User-Agent': `${UA + atob('IENGLVdvcmtlcnMtZWRnZXR1bm5lbC9jbWxpdQ==')}`
 					}});
 				content = await response.text();
 			}
@@ -1659,7 +1602,7 @@ async function getAddressesapi(api) {
 			method: 'get', 
 			headers: {
 				'Accept': 'text/html,application/xhtml+xml,application/xml;',
-				'User-Agent': 'CF-Workers-edgetunnel/cmliu'
+				'User-Agent': atob('Q0YtV29ya2Vycy1lZGdldHVubmVsL2NtbGl1')
 			},
 			signal: controller.signal // 将AbortController的信号量添加到fetch请求中，以便于需要时可以取消请求
 		}).then(response => response.ok ? response.text() : Promise.reject())));
