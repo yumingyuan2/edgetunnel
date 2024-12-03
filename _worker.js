@@ -1424,8 +1424,11 @@ ${decodeURIComponent(atob('dGVsZWdyYW0lMjAlRTQlQkElQTQlRTYlQjUlODElRTclQkUlQTQlM
 	
 			newAddressesapi = await 整理优选列表(addressesapi);
 			newAddressescsv = await 整理测速结果('TRUE');
-			url = `https://${hostName}/${fakeUserID}`;
-			if (hostName.includes("worker") || hostName.includes("notls") || noTLS == 'true') url += '?notls';
+			url = `https://${hostName}/${fakeUserID + _url.search}`;
+			if (hostName.includes("worker") || hostName.includes("notls") || noTLS == 'true') {
+				if (_url.search) url += '&notls';
+				else url += '?notls';
+			}
 			console.log(`虚假订阅: ${url}`);
 		} 
 
