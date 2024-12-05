@@ -157,7 +157,7 @@ export default {
 					return new Response(`${fakeConfig}`, { status: 200 });
 				} else if (路径 == `/${env.KEY}` || 路径 == `/${userID}`) {
 					await sendMessage(`#获取订阅 ${FileName}`, request.headers.get('CF-Connecting-IP'), `UA: ${UA}</tg-spoiler>\n域名: ${url.hostname}\n<tg-spoiler>入口: ${url.pathname + url.search}</tg-spoiler>`);
-					const vlessConfig = await 生成配置信息(userID, request.headers.get('Host'), sub, UA, RproxyIP, url, env);
+					const 维列斯Config = await 生成配置信息(userID, request.headers.get('Host'), sub, UA, RproxyIP, url, env);
 					const now = Date.now();
 					//const timestamp = Math.floor(now / 1000);
 					const today = new Date(now);
@@ -168,7 +168,7 @@ export default {
 					let total = 24 * 1099511627776 ;
 
 					if (userAgent && userAgent.includes('mozilla')){
-						return new Response(`${vlessConfig}`, {
+						return new Response(`${维列斯Config}`, {
 							status: 200,
 							headers: {
 								"Content-Type": "text/plain;charset=utf-8",
@@ -177,7 +177,7 @@ export default {
 							}
 						});
 					} else {
-						return new Response(`${vlessConfig}`, {
+						return new Response(`${维列斯Config}`, {
 							status: 200,
 							headers: {
 								"Content-Disposition": `attachment; filename=${FileName}; filename*=utf-8''${encodeURIComponent(FileName)}`,
@@ -229,7 +229,7 @@ export default {
 					enableSocks = false;
 				}
 
-				return await vlessOverWSHandler(request);
+				return await 维列斯OverWSHandler(request);
 			}
 		} catch (err) {
 			let e = err;
@@ -238,7 +238,7 @@ export default {
 	},
 };
 
-async function vlessOverWSHandler(request) {
+async function 维列斯OverWSHandler(request) {
 
 	// @ts-ignore
 	const webSocketPair = new WebSocketPair();
@@ -281,7 +281,7 @@ async function vlessOverWSHandler(request) {
 				return;
 			}
 
-			// 处理 VLESS 协议头部
+			// 处理 维列斯 协议头部
 			const {
 				hasError,
 				message,
@@ -289,9 +289,9 @@ async function vlessOverWSHandler(request) {
 				portRemote = 443,
 				addressRemote = '',
 				rawDataIndex,
-				vlessVersion = new Uint8Array([0, 0]),
+				维列斯Version = new Uint8Array([0, 0]),
 				isUDP,
-			} = processVlessHeader(chunk, userID);
+			} = process维列斯Header(chunk, userID);
 			// 设置地址和端口信息，用于日志
 			address = addressRemote;
 			portWithRandomLog = `${portRemote}--${Math.random()} ${isUDP ? 'udp ' : 'tcp '} `;
@@ -309,18 +309,18 @@ async function vlessOverWSHandler(request) {
 					return;
 				}
 			}
-			// 构建 VLESS 响应头部
-			const vlessResponseHeader = new Uint8Array([vlessVersion[0], 0]);
+			// 构建 维列斯 响应头部
+			const 维列斯ResponseHeader = new Uint8Array([维列斯Version[0], 0]);
 			// 获取实际的客户端数据
 			const rawClientData = chunk.slice(rawDataIndex);
 
 			if (isDns) {
 				// 如果是 DNS 查询，调用 DNS 处理函数
-				return handleDNSQuery(rawClientData, webSocket, vlessResponseHeader, log);
+				return handleDNSQuery(rawClientData, webSocket, 维列斯ResponseHeader, log);
 			}
 			// 处理 TCP 出站连接
 			log(`处理 TCP 出站连接 ${addressRemote}:${portRemote}`);
-			handleTCPOutBound(remoteSocketWapper, addressType, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader, log);
+			handleTCPOutBound(remoteSocketWapper, addressType, addressRemote, portRemote, rawClientData, webSocket, 维列斯ResponseHeader, log);
 		},
 		close() {
 			log(`readableWebSocketStream 已关闭`);
@@ -340,7 +340,7 @@ async function vlessOverWSHandler(request) {
 	});
 }
 
-async function handleTCPOutBound(remoteSocket, addressType, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader, log,) {
+async function handleTCPOutBound(remoteSocket, addressType, addressRemote, portRemote, rawClientData, webSocket, 维列斯ResponseHeader, log,) {
 	async function useSocks5Pattern(address) {
 		if ( go2Socks5s.includes(atob('YWxsIGlu')) || go2Socks5s.includes(atob('Kg==')) ) return true;
 		return go2Socks5s.some(pattern => {
@@ -397,7 +397,7 @@ async function handleTCPOutBound(remoteSocket, addressType, addressRemote, portR
 			safeCloseWebSocket(webSocket);
 		})
 		// 建立从远程 Socket 到 WebSocket 的数据流
-		remoteSocketToWS(tcpSocket, webSocket, vlessResponseHeader, null, log);
+		remoteSocketToWS(tcpSocket, webSocket, 维列斯ResponseHeader, null, log);
 	}
 
 	let useSocks = false;
@@ -408,7 +408,7 @@ async function handleTCPOutBound(remoteSocket, addressType, addressRemote, portR
 	// 当远程 Socket 就绪时，将其传递给 WebSocket
 	// 建立从远程服务器到 WebSocket 的数据流，用于将远程服务器的响应发送回客户端
 	// 如果连接失败或无数据，retry 函数将被调用进行重试
-	remoteSocketToWS(tcpSocket, webSocket, vlessResponseHeader, retry, log);
+	remoteSocketToWS(tcpSocket, webSocket, 维列斯ResponseHeader, retry, log);
 }
 
 function makeReadableWebSocketStream(webSocketServer, earlyDataHeader, log) {
@@ -489,26 +489,26 @@ function makeReadableWebSocketStream(webSocketServer, earlyDataHeader, log) {
 	return stream;
 }
 
-// https://xtls.github.io/development/protocols/vless.html
+// https://xtls.github.io/development/protocols/维列斯.html
 // https://github.com/zizifn/excalidraw-backup/blob/main/v2ray-protocol.excalidraw
 
 /**
- * 解析 VLESS 协议的头部数据
- * @param { ArrayBuffer} vlessBuffer VLESS 协议的原始头部数据
+ * 解析 维列斯 协议的头部数据
+ * @param { ArrayBuffer} 维列斯Buffer 维列斯 协议的原始头部数据
  * @param {string} userID 用于验证的用户 ID
  * @returns {Object} 解析结果，包括是否有错误、错误信息、远程地址信息等
  */
-function processVlessHeader(vlessBuffer, userID) {
+function process维列斯Header(维列斯Buffer, userID) {
 	// 检查数据长度是否足够（至少需要 24 字节）
-	if (vlessBuffer.byteLength < 24) {
+	if (维列斯Buffer.byteLength < 24) {
 		return {
 			hasError: true,
 			message: 'invalid data',
 		};
 	}
 
-	// 解析 VLESS 协议版本（第一个字节）
-	const version = new Uint8Array(vlessBuffer.slice(0, 1));
+	// 解析 维列斯 协议版本（第一个字节）
+	const version = new Uint8Array(维列斯Buffer.slice(0, 1));
 
 	let isValidUser = false;
 	let isUDP = false;
@@ -521,24 +521,24 @@ function processVlessHeader(vlessBuffer, userID) {
 	}
 
 	// 使用函数验证
-	isValidUser = isUserIDValid(userID, userIDLow, vlessBuffer);
+	isValidUser = isUserIDValid(userID, userIDLow, 维列斯Buffer);
 
 	// 如果用户 ID 无效，返回错误
 	if (!isValidUser) {
 		return {
 			hasError: true,
-			message: `invalid user ${(new Uint8Array(vlessBuffer.slice(1, 17)))}`,
+			message: `invalid user ${(new Uint8Array(维列斯Buffer.slice(1, 17)))}`,
 		};
 	}
 
 	// 获取附加选项的长度（第 17 个字节）
-	const optLength = new Uint8Array(vlessBuffer.slice(17, 18))[0];
+	const optLength = new Uint8Array(维列斯Buffer.slice(17, 18))[0];
 	// 暂时跳过附加选项
 
 	// 解析命令（紧跟在选项之后的 1 个字节）
 	// 0x01: TCP, 0x02: UDP, 0x03: MUX（多路复用）
 	const command = new Uint8Array(
-		vlessBuffer.slice(18 + optLength, 18 + optLength + 1)
+		维列斯Buffer.slice(18 + optLength, 18 + optLength + 1)
 	)[0];
 
 	// 0x01 TCP
@@ -559,14 +559,14 @@ function processVlessHeader(vlessBuffer, userID) {
 
 	// 解析远程端口（大端序，2 字节）
 	const portIndex = 18 + optLength + 1;
-	const portBuffer = vlessBuffer.slice(portIndex, portIndex + 2);
+	const portBuffer = 维列斯Buffer.slice(portIndex, portIndex + 2);
 	// port is big-Endian in raw data etc 80 == 0x005d
 	const portRemote = new DataView(portBuffer).getUint16(0);
 
 	// 解析地址类型和地址
 	let addressIndex = portIndex + 2;
 	const addressBuffer = new Uint8Array(
-		vlessBuffer.slice(addressIndex, addressIndex + 1)
+		维列斯Buffer.slice(addressIndex, addressIndex + 1)
 	);
 
 	// 地址类型：1-IPv4(4字节), 2-域名(可变长), 3-IPv6(16字节)
@@ -581,26 +581,26 @@ function processVlessHeader(vlessBuffer, userID) {
 			addressLength = 4;
 			// 将 4 个字节转为点分十进制格式
 			addressValue = new Uint8Array(
-				vlessBuffer.slice(addressValueIndex, addressValueIndex + addressLength)
+				维列斯Buffer.slice(addressValueIndex, addressValueIndex + addressLength)
 			).join('.');
 			break;
 		case 2:
 			// 域名
 			// 第一个字节是域名长度
 			addressLength = new Uint8Array(
-				vlessBuffer.slice(addressValueIndex, addressValueIndex + 1)
+				维列斯Buffer.slice(addressValueIndex, addressValueIndex + 1)
 			)[0];
 			addressValueIndex += 1;
 			// 解码域名
 			addressValue = new TextDecoder().decode(
-				vlessBuffer.slice(addressValueIndex, addressValueIndex + addressLength)
+				维列斯Buffer.slice(addressValueIndex, addressValueIndex + addressLength)
 			);
 			break;
 		case 3:
 			// IPv6 地址
 			addressLength = 16;
 			const dataView = new DataView(
-				vlessBuffer.slice(addressValueIndex, addressValueIndex + addressLength)
+				维列斯Buffer.slice(addressValueIndex, addressValueIndex + addressLength)
 			);
 			// 每 2 字节构成 IPv6 地址的一部分
 			const ipv6 = [];
@@ -633,17 +633,17 @@ function processVlessHeader(vlessBuffer, userID) {
 		addressType,				 // 地址类型
 		portRemote,				 // 远程端口
 		rawDataIndex: addressValueIndex + addressLength,  // 原始数据的实际起始位置
-		vlessVersion: version,	  // VLESS 协议版本
+		维列斯Version: version,	  // 维列斯 协议版本
 		isUDP,					 // 是否是 UDP 请求
 	};
 }
 
-async function remoteSocketToWS(remoteSocket, webSocket, vlessResponseHeader, retry, log) {
+async function remoteSocketToWS(remoteSocket, webSocket, 维列斯ResponseHeader, retry, log) {
 	// 将数据从远程服务器转发到 WebSocket
 	let remoteChunkCount = 0;
 	let chunks = [];
 	/** @type {ArrayBuffer | null} */
-	let vlessHeader = vlessResponseHeader;
+	let 维列斯Header = 维列斯ResponseHeader;
 	let hasIncomingData = false; // 检查远程 Socket 是否有传入数据
 
 	// 使用管道将远程 Socket 的可读流连接到一个可写流
@@ -669,10 +669,10 @@ async function remoteSocketToWS(remoteSocket, webSocket, vlessResponseHeader, re
 						);
 					}
 
-					if (vlessHeader) {
-						// 如果有 VLESS 响应头部，将其与第一个数据块一起发送
-						webSocket.send(await new Blob([vlessHeader, chunk]).arrayBuffer());
-						vlessHeader = null; // 清空头部，之后不再发送
+					if (维列斯Header) {
+						// 如果有 维列斯 响应头部，将其与第一个数据块一起发送
+						webSocket.send(await new Blob([维列斯Header, chunk]).arrayBuffer());
+						维列斯Header = null; // 清空头部，之后不再发送
 					} else {
 						// 直接发送数据块
 						// 以前这里有流量控制代码，限制大量数据的发送速率
@@ -830,10 +830,10 @@ function stringify(arr, offset = 0) {
 /**
  * 处理 DNS 查询的函数
  * @param {ArrayBuffer} udpChunk - 客户端发送的 DNS 查询数据
- * @param {ArrayBuffer} vlessResponseHeader - VLESS 协议的响应头部数据
+ * @param {ArrayBuffer} 维列斯ResponseHeader - 维列斯 协议的响应头部数据
  * @param {(string)=> void} log - 日志记录函数
  */
-async function handleDNSQuery(udpChunk, webSocket, vlessResponseHeader, log) {
+async function handleDNSQuery(udpChunk, webSocket, 维列斯ResponseHeader, log) {
 	// 无论客户端发送到哪个 DNS 服务器，我们总是使用硬编码的服务器
 	// 因为有些 DNS 服务器不支持 DNS over TCP
 	try {
@@ -841,7 +841,7 @@ async function handleDNSQuery(udpChunk, webSocket, vlessResponseHeader, log) {
 		const dnsServer = '8.8.4.4'; // 在 Cloudflare 修复连接自身 IP 的 bug 后，将改为 1.1.1.1
 		const dnsPort = 53; // DNS 服务的标准端口
 
-		let vlessHeader = vlessResponseHeader; // 保存 VLESS 响应头部，用于后续发送
+		let 维列斯Header = 维列斯ResponseHeader; // 保存 维列斯 响应头部，用于后续发送
 
 		// 与指定的 DNS 服务器建立 TCP 连接
 		const tcpSocket = connect({
@@ -858,10 +858,10 @@ async function handleDNSQuery(udpChunk, webSocket, vlessResponseHeader, log) {
 		await tcpSocket.readable.pipeTo(new WritableStream({
 			async write(chunk) {
 				if (webSocket.readyState === WS_READY_STATE_OPEN) {
-					if (vlessHeader) {
-						// 如果有 VLESS 头部，则将其与 DNS 响应数据合并后发送
-						webSocket.send(await new Blob([vlessHeader, chunk]).arrayBuffer());
-						vlessHeader = null; // 头部只发送一次，之后置为 null
+					if (维列斯Header) {
+						// 如果有 维列斯 头部，则将其与 DNS 响应数据合并后发送
+						webSocket.send(await new Blob([维列斯Header, chunk]).arrayBuffer());
+						维列斯Header = null; // 头部只发送一次，之后置为 null
 					} else {
 						// 否则直接发送 DNS 响应数据
 						webSocket.send(chunk);
@@ -1672,9 +1672,9 @@ function 生成本地订阅(host,UUID,noTLS,newAddressesapi,newAddressescsv,newA
 			let 节点备注 = '';
 			const 协议类型 = atob(啥啥啥_写的这是啥啊);
 			
-			const vlessLink = `${协议类型}://${UUID}@${address}:${port + atob('P2VuY3J5cHRpb249bm9uZSZzZWN1cml0eT0mdHlwZT13cyZob3N0PQ==') + 伪装域名}&path=${encodeURIComponent(最终路径)}#${encodeURIComponent(addressid + 节点备注)}`;
+			const 维列斯Link = `${协议类型}://${UUID}@${address}:${port + atob('P2VuY3J5cHRpb249bm9uZSZzZWN1cml0eT0mdHlwZT13cyZob3N0PQ==') + 伪装域名}&path=${encodeURIComponent(最终路径)}#${encodeURIComponent(addressid + 节点备注)}`;
 	
-			return vlessLink;
+			return 维列斯Link;
 
 		}).join('\n');
 
@@ -1737,9 +1737,9 @@ function 生成本地订阅(host,UUID,noTLS,newAddressesapi,newAddressescsv,newA
 		}
 		
 		const 协议类型 = atob(啥啥啥_写的这是啥啊);
-		const vlessLink = `${协议类型}://${UUID}@${address}:${port + atob('P2VuY3J5cHRpb249bm9uZSZzZWN1cml0eT10bHMmc25pPQ==') + 伪装域名}&fp=random&type=ws&host=${伪装域名}&path=${encodeURIComponent(最终路径)}#${encodeURIComponent(addressid + 节点备注)}`;
+		const 维列斯Link = `${协议类型}://${UUID}@${address}:${port + atob('P2VuY3J5cHRpb249bm9uZSZzZWN1cml0eT10bHMmc25pPQ==') + 伪装域名}&fp=random&type=ws&host=${伪装域名}&path=${encodeURIComponent(最终路径)}#${encodeURIComponent(addressid + 节点备注)}`;
 			
-		return vlessLink;
+		return 维列斯Link;
 	}).join('\n');
 
 	let base64Response = responseBody; // 重新进行 Base64 编码
