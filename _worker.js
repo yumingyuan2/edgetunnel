@@ -90,7 +90,7 @@ export default {
 			socks5s = await 整理(socks5Address);
 			socks5Address = socks5s[Math.floor(Math.random() * socks5s.length)];
 			socks5Address = socks5Address.split('//')[1] || socks5Address;
-			if(env.GO2SOCKS5) go2Socks5s = await 整理(env.GO2SOCKS5);
+			if (env.GO2SOCKS5) go2Socks5s = await 整理(env.GO2SOCKS5);
 			if (env.CFPORTS) httpsPorts = await 整理(env.CFPORTS);
 
 			if (socks5Address) {
@@ -122,11 +122,11 @@ export default {
 				ChatID = env.TGID || ChatID; 
 				FileName = env.SUBNAME || FileName;
 				subEmoji = env.SUBEMOJI || env.EMOJI || subEmoji;
-				if(subEmoji == '0') subEmoji = 'false';
+				if (subEmoji == '0') subEmoji = 'false';
 
 				sub = env.SUB || sub;
 				subConverter = env.SUBAPI || subConverter;
-				if( subConverter.includes("http://") ){
+				if (subConverter.includes("http://") ){
 					subConverter = subConverter.split("//")[1];
 					subProtocol = 'http';
 				} else {
@@ -406,7 +406,7 @@ async function handleTCPOutBound(remoteSocket, addressType, addressRemote, portR
 	}
 
 	let useSocks = false;
-	if( go2Socks5s.length > 0 && enableSocks ) useSocks = await useSocks5Pattern(addressRemote);
+	if (go2Socks5s.length > 0 && enableSocks ) useSocks = await useSocks5Pattern(addressRemote);
 	// 首次尝试连接远程服务器
 	let tcpSocket = await connectAndWrite(addressRemote, portRemote, useSocks);
 
@@ -1297,7 +1297,7 @@ async function 生成配置信息(userID, hostName, sub, UA, RproxyIP, _url, env
 		if (proxyhosts.length != 0) proxyhost = proxyhosts[Math.floor(Math.random() * proxyhosts.length)] + "/";
 	}
 
-	if ( userAgent.includes('mozilla') && !subParams.some(_searchParams => _url.searchParams.has(_searchParams))) {
+	if (userAgent.includes('mozilla') && !subParams.some(_searchParams => _url.searchParams.has(_searchParams))) {
 		const newSocks5s = socks5s.map(socks5Address => {
 			if (socks5Address.includes('@')) return socks5Address.split('@')[1];
 			else if (socks5Address.includes('//')) return socks5Address.split('//')[1];
@@ -1305,7 +1305,7 @@ async function 生成配置信息(userID, hostName, sub, UA, RproxyIP, _url, env
 		});
 
 		let socks5List = '';
-		if( go2Socks5s.length > 0 && enableSocks ) {
+		if (go2Socks5s.length > 0 && enableSocks ) {
 			socks5List = `${decodeURIComponent('SOCKS5%EF%BC%88%E7%99%BD%E5%90%8D%E5%8D%95%EF%BC%89%3A%20')}`;
 			if (go2Socks5s.includes(atob('YWxsIGlu'))||go2Socks5s.includes(atob('Kg=='))) socks5List += `${decodeURIComponent('%E6%89%80%E6%9C%89%E6%B5%81%E9%87%8F')}\n`;
 			else socks5List += `\n  ${go2Socks5s.join('\n  ')}\n`;
