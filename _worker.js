@@ -50,11 +50,11 @@ export default {
 		try {
 			const UA = request.headers.get('User-Agent') || 'null';
 			const userAgent = UA.toLowerCase();
-			userID = env.UUID || userID;
-			if (env.KEY || (userID && !isValidUUID(userID))) {
-				动态UUID = env.KEY || userID;
-				有效时间 = env.TIME || 有效时间;
-				更新时间 = env.UPTIME || 更新时间;
+			userID = env.UUID || env.uuid || env.PASSWORD || env.pswd || userID;
+			if (env.KEY || env.TOKEN || (userID && !isValidUUID(userID))) {
+				动态UUID = env.KEY || env.TOKEN || userID;
+				有效时间 = Number(env.TIME) || 有效时间;
+				更新时间 = Number(env.UPTIME) || 更新时间;
 				const userIDs = await 生成动态UUID(动态UUID);
 				userID = userIDs[0];
 				userIDLow = userIDs[1];
@@ -82,7 +82,7 @@ export default {
 			
 			fakeHostName = `${fakeUserIDMD5.slice(6, 9)}.${fakeUserIDMD5.slice(13, 19)}`;
 
-			proxyIP = env.PROXYIP || proxyIP;
+			proxyIP = env.PROXYIP || env.proxyip || proxyIP;
 			proxyIPs = await 整理(proxyIP);
 			proxyIP = proxyIPs[Math.floor(Math.random() * proxyIPs.length)];
 
@@ -115,8 +115,8 @@ export default {
 				if (env.ADDNOTLS) addressesnotls = await 整理(env.ADDNOTLS);
 				if (env.ADDNOTLSAPI) addressesnotlsapi = await 整理(env.ADDNOTLSAPI);
 				if (env.ADDCSV) addressescsv = await 整理(env.ADDCSV);
-				DLS = env.DLS || DLS;
-				remarkIndex = env.CSVREMARK || remarkIndex;
+				DLS = Number(env.DLS) || DLS;
+				remarkIndex = Number(env.CSVREMARK) || remarkIndex;
 				BotToken = env.TGTOKEN || BotToken;
 				ChatID = env.TGID || ChatID; 
 				if(env.GO2SOCKS5) go2Socks5s = await 整理(env.GO2SOCKS5);
@@ -1807,7 +1807,7 @@ function 生成动态UUID(密钥) {
 	function 获取当前周数() {
 		const 现在 = new Date();
 		const 调整后的现在 = new Date(现在.getTime() + 时区偏移 * 60 * 60 * 1000);
-		const 时间差 = 调整后的现在 - 起始日期;
+		const 时间差 = Number(调整后的现在) - Number(起始日期);
 		return Math.ceil(时间差 / 一周的毫秒数);
 	}
 
