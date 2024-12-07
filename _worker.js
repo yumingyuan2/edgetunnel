@@ -44,23 +44,21 @@ let userIDLow;
 let userIDTime = "";
 let proxyIPPool = [];
 let path = '/?ed=2560';
+let 动态UUID;
 export default {
 	async fetch(request, env, ctx) {
 		try {
 			const UA = request.headers.get('User-Agent') || 'null';
 			const userAgent = UA.toLowerCase();
-
-			if (env.KEY) {
+			userID = env.UUID || userID;
+			if (env.KEY || (userID && !isValidUUID(userID))) {
+				动态UUID = env.KEY || userID;
 				有效时间 = env.TIME || 有效时间;
 				更新时间 = env.UPTIME || 更新时间;
-				const userIDs = await 生成动态UUID(env.KEY);
+				const userIDs = await 生成动态UUID(动态UUID);
 				userID = userIDs[0];
-			} else if (env.UUID) {
-				userID = env.UUID;
+				userIDLow = userIDs[1];
 			}
-			
-			subEmoji = env.SUBEMOJI || env.EMOJI || subEmoji;
-			if(subEmoji == '0') subEmoji = 'false';
 
 			if (!userID) {
 				return new Response('请设置你的UUID变量，或尝试重试部署，检查变量是否生效？', { 
@@ -93,15 +91,7 @@ export default {
 			socks5Address = socks5s[Math.floor(Math.random() * socks5s.length)];
 			socks5Address = socks5Address.split('//')[1] || socks5Address;
 			if (env.CFPORTS) httpsPorts = await 整理(env.CFPORTS);
-			sub = env.SUB || sub;
-			subConverter = env.SUBAPI || subConverter;
-			if( subConverter.includes("http://") ){
-				subConverter = subConverter.split("//")[1];
-				subProtocol = 'http';
-			} else {
-				subConverter = subConverter.split("//")[1] || subConverter;
-			}
-			subConfig = env.SUBCONFIG || subConfig;
+
 			if (socks5Address) {
 				try {
 					parsedSocks5Address = socks5AddressParser(socks5Address);
@@ -116,22 +106,36 @@ export default {
 			} else {
 				RproxyIP = env.RPROXYIP || !proxyIP ? 'true' : 'false';
 			}
-			if (env.ADD) addresses = await 整理(env.ADD);
-			if (env.ADDAPI) addressesapi = await 整理(env.ADDAPI);
-			if (env.ADDNOTLS) addressesnotls = await 整理(env.ADDNOTLS);
-			if (env.ADDNOTLSAPI) addressesnotlsapi = await 整理(env.ADDNOTLSAPI);
-			if (env.ADDCSV) addressescsv = await 整理(env.ADDCSV);
-			DLS = env.DLS || DLS;
-			remarkIndex = env.CSVREMARK || remarkIndex;
-			BotToken = env.TGTOKEN || BotToken;
-			ChatID = env.TGID || ChatID; 
-			if(env.GO2SOCKS5) go2Socks5s = await 整理(env.GO2SOCKS5);
+
 			const upgradeHeader = request.headers.get('Upgrade');
 			const url = new URL(request.url);
-			if (url.searchParams.has('sub') && url.searchParams.get('sub') !== '') sub = url.searchParams.get('sub');
-			FileName = env.SUBNAME || FileName;
-			if (url.searchParams.has('notls')) noTLS = 'true';
 			if (!upgradeHeader || upgradeHeader !== 'websocket') {
+				if (env.ADD) addresses = await 整理(env.ADD);
+				if (env.ADDAPI) addressesapi = await 整理(env.ADDAPI);
+				if (env.ADDNOTLS) addressesnotls = await 整理(env.ADDNOTLS);
+				if (env.ADDNOTLSAPI) addressesnotlsapi = await 整理(env.ADDNOTLSAPI);
+				if (env.ADDCSV) addressescsv = await 整理(env.ADDCSV);
+				DLS = env.DLS || DLS;
+				remarkIndex = env.CSVREMARK || remarkIndex;
+				BotToken = env.TGTOKEN || BotToken;
+				ChatID = env.TGID || ChatID; 
+				if(env.GO2SOCKS5) go2Socks5s = await 整理(env.GO2SOCKS5);
+				FileName = env.SUBNAME || FileName;
+				subEmoji = env.SUBEMOJI || env.EMOJI || subEmoji;
+				if(subEmoji == '0') subEmoji = 'false';
+
+				sub = env.SUB || sub;
+				subConverter = env.SUBAPI || subConverter;
+				if( subConverter.includes("http://") ){
+					subConverter = subConverter.split("//")[1];
+					subProtocol = 'http';
+				} else {
+					subConverter = subConverter.split("//")[1] || subConverter;
+				}
+				subConfig = env.SUBCONFIG || subConfig;
+				if (url.searchParams.has('sub') && url.searchParams.get('sub') !== '') sub = url.searchParams.get('sub');
+				if (url.searchParams.has('notls')) noTLS = 'true';
+
 				if (url.searchParams.has('proxyip')) {
 					path = `/?ed=2560&proxyip=${url.searchParams.get('proxyip')}`;
 					RproxyIP = 'false';
@@ -142,6 +146,7 @@ export default {
 					path = `/?ed=2560&socks5=${url.searchParams.get('socks')}`;
 					RproxyIP = 'false';
 				}
+
 				const 路径 = url.pathname.toLowerCase();
 				if (路径 == '/') {
 					if (env.URL302) return Response.redirect(env.URL302, 302);
@@ -155,7 +160,7 @@ export default {
 				} else if (路径 == `/${fakeUserID}`) {
 					const fakeConfig = await 生成配置信息(userID, request.headers.get('Host'), sub, 'CF-Workers-SUB', RproxyIP, url, env);
 					return new Response(`${fakeConfig}`, { status: 200 });
-				} else if (路径 == `/${env.KEY}` || 路径 == `/${userID}`) {
+				} else if (路径 == `/${动态UUID}` || 路径 == `/${userID}`) {
 					await sendMessage(`#获取订阅 ${FileName}`, request.headers.get('CF-Connecting-IP'), `UA: ${UA}</tg-spoiler>\n域名: ${url.hostname}\n<tg-spoiler>入口: ${url.pathname + url.search}</tg-spoiler>`);
 					const 维列斯Config = await 生成配置信息(userID, request.headers.get('Host'), sub, UA, RproxyIP, url, env);
 					const now = Date.now();
@@ -1263,7 +1268,7 @@ async function 生成配置信息(userID, hostName, sub, UA, RproxyIP, _url, env
 			addresses = addresses.concat(cfips.map(cidr => generateRandomIPFromCIDR(cidr) + '#CF随机节点'));
 		}
 	}
-	const uuid = (_url.pathname == `/${env.KEY}`) ? env.KEY : userID;
+	const uuid = (_url.pathname == `/${动态UUID}`) ? 动态UUID : userID;
 	const userAgent = UA.toLowerCase();
 	const Config = 配置信息(userID , hostName);
 	const v2ray = Config[0];
@@ -1325,9 +1330,9 @@ async function 生成配置信息(userID, hostName, sub, UA, RproxyIP, _url, env
 			if (addressescsv.length > 0) 订阅器 += `ADDCSV（IPTest测速csv文件 限速 ${DLS} ）: \n  ${addressescsv.join('\n  ')}\n`;
 		}
 
-		if (env.KEY && _url.pathname !== `/${env.KEY}`) 订阅器 = '';
+		if (动态UUID && _url.pathname !== `/${动态UUID}`) 订阅器 = '';
 		else 订阅器 += `\nSUBAPI（订阅转换后端）: ${subProtocol}://${subConverter}\nSUBCONFIG（订阅转换配置文件）: ${subConfig}`;
-		const 动态UUID = (uuid != userID) ? `TOKEN: ${uuid}\nUUIDNow: ${userID}\nUUIDLow: ${userIDLow}\n${userIDTime}TIME（动态UUID有效时间）: ${有效时间} 天\nUPTIME（动态UUID更新时间）: ${更新时间} 时（北京时间）\n\n` : `${userIDTime}`;
+		const 动态UUID信息 = (uuid != userID) ? `TOKEN: ${uuid}\nUUIDNow: ${userID}\nUUIDLow: ${userIDLow}\n${userIDTime}TIME（动态UUID有效时间）: ${有效时间} 天\nUPTIME（动态UUID更新时间）: ${更新时间} 时（北京时间）\n\n` : `${userIDTime}`;
 		return `
 ################################################################
 Subscribe / sub 订阅地址, 支持 Base64、clash-meta、sing-box 订阅格式
@@ -1350,7 +1355,7 @@ https://${proxyhost}${hostName}/${uuid}?singbox
 ################################################################
 ${FileName} 配置信息
 ---------------------------------------------------------------
-${动态UUID}HOST: ${hostName}
+${动态UUID信息}HOST: ${hostName}
 UUID: ${userID}
 FKID: ${fakeUserID}
 UA: ${UA}
