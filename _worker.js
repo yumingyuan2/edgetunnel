@@ -90,6 +90,7 @@ export default {
 			socks5s = await 整理(socks5Address);
 			socks5Address = socks5s[Math.floor(Math.random() * socks5s.length)];
 			socks5Address = socks5Address.split('//')[1] || socks5Address;
+			if(env.GO2SOCKS5) go2Socks5s = await 整理(env.GO2SOCKS5);
 			if (env.CFPORTS) httpsPorts = await 整理(env.CFPORTS);
 
 			if (socks5Address) {
@@ -119,7 +120,6 @@ export default {
 				remarkIndex = Number(env.CSVREMARK) || remarkIndex;
 				BotToken = env.TGTOKEN || BotToken;
 				ChatID = env.TGID || ChatID; 
-				if(env.GO2SOCKS5) go2Socks5s = await 整理(env.GO2SOCKS5);
 				FileName = env.SUBNAME || FileName;
 				subEmoji = env.SUBEMOJI || env.EMOJI || subEmoji;
 				if(subEmoji == '0') subEmoji = 'false';
