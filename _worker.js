@@ -1385,7 +1385,7 @@ async function 生成配置信息(userID, hostName, sub, UA, RproxyIP, _url, env
 			################################################################<br>
 			v2ray<br>
 			---------------------------------------------------------------<br>
-			${v2ray}<br>
+			<a href="javascript:void(0)" onclick="copyToClipboard('${v2ray}')" style="color:blue;text-decoration:underline;cursor:pointer;">${v2ray}</a><br>
 			---------------------------------------------------------------<br>
 			################################################################<br>
 			clash-meta<br>
