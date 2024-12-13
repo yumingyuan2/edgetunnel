@@ -2154,7 +2154,7 @@ async function KV(request, env, txt = 'ADD.txt') {
 				</script>
 			</body>
 			</html>
-			`;
+		`;
 		
 		return new Response(html, {
 			headers: { "Content-Type": "text/html;charset=utf-8" }
