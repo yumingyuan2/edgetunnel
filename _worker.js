@@ -1230,6 +1230,7 @@ async function 生成配置信息(userID, hostName, sub, UA, RproxyIP, _url, env
 		if (subs.length > 1) sub = subs[0];
 	} else {
 		if (env.KV){
+			await 迁移地址列表(env);
 			const 优选地址列表 = await env.KV.get('ADD.txt');
 			if (优选地址列表) {
 				const 优选地址数组 = await 整理(优选地址列表);
@@ -1902,6 +1903,20 @@ function 生成动态UUID(密钥) {
 	const 到期时间字符串 = `到期时间(UTC): ${到期时间UTC.toISOString().slice(0, 19).replace('T', ' ')} (UTC+8): ${结束时间.toISOString().slice(0, 19).replace('T', ' ')}\n`;
 
 	return Promise.all([当前UUIDPromise, 上一个UUIDPromise, 到期时间字符串]);
+}
+
+async function 迁移地址列表(env, txt = 'ADD.txt') {
+	const 旧数据 = await env.KV.get(`/${txt}`);
+	const 新数据 = await env.KV.get(txt);
+	
+	if (旧数据 && !新数据) {
+		// 写入新位置
+		await env.KV.put(txt, 旧数据);
+		// 删除旧数据
+		await env.KV.delete(`/${txt}`);
+		return true;
+	}
+	return false;
 }
 
 async function KV(request, env, txt = 'ADD.txt') {
