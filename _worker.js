@@ -238,6 +238,9 @@ export default {
 				} else if (new RegExp('/proxyip.', 'i').test(url.pathname)) {
 					proxyIP = `proxyip.${url.pathname.toLowerCase().split("/proxyip.")[1]}`;
 					enableSocks = false;
+				} else if (new RegExp('/pyip=', 'i').test(url.pathname)) {
+					proxyIP = url.pathname.toLowerCase().split('/pyip=')[1];
+					enableSocks = false;
 				}
 
 				return await 维列斯OverWSHandler(request);
@@ -1227,7 +1230,7 @@ async function 生成配置信息(userID, hostName, sub, UA, RproxyIP, _url, env
 		if (subs.length > 1) sub = subs[0];
 	} else {
 		if (env.KV){
-			const 优选地址列表 = await env.KV.get('/ADD.txt');
+			const 优选地址列表 = await env.KV.get('ADD.txt');
 			if (优选地址列表) {
 				const 优选地址数组 = await 整理(优选地址列表);
 				const 分类地址 = {
@@ -1378,7 +1381,23 @@ async function 生成配置信息(userID, hostName, sub, UA, RproxyIP, _url, env
 			singbox订阅地址:<br>
 			<a href="javascript:void(0)" onclick="copyToClipboard('https://${proxyhost}${hostName}/${uuid}?sb')" style="color:blue;text-decoration:underline;cursor:pointer;">https://${proxyhost}${hostName}/${uuid}?sb</a><br>
 			<a href="javascript:void(0)" onclick="copyToClipboard('https://${proxyhost}${hostName}/${uuid}?singbox')" style="color:blue;text-decoration:underline;cursor:pointer;">https://${proxyhost}${hostName}/${uuid}?singbox</a><br>
-
+			<br>
+			<strong><a href="javascript:void(0);" id="noticeToggle" onclick="toggleNotice()">实用订阅技巧∨</a></strong><br>
+				<div id="noticeContent" class="notice-content" style="display: none;">
+					<strong>1.</strong> 如您使用的是 PassWall、SSR+ 等路由插件，推荐使用 <strong>Base64订阅地址</strong> 进行订阅；<br>
+					<br>
+					<strong>2.</strong> 快速切换 <a href='${atob('aHR0cHM6Ly9naXRodWIuY29tL2NtbGl1L1dvcmtlclZsZXNzMnN1Yg==')}'>优选订阅生成器</a> 至：sub.google.com，您可将"?sub=sub.google.com"参数添加到链接末尾，例如：<br>
+					&nbsp;&nbsp;https://${proxyhost}${hostName}/${uuid}<strong>?sub=sub.google.com</strong><br>
+					<br>
+					<strong>3.</strong> 快速更换 PROXYIP 至：proxyip.fxxk.dedyn.io:443，您可将"?proxyip=proxyip.fxxk.dedyn.io:443"参数添加到链接末尾，例如：<br>
+					&nbsp;&nbsp; https://${proxyhost}${hostName}/${uuid}<strong>?proxyip=proxyip.fxxk.dedyn.io:443</strong><br>
+					<br>
+					<strong>4.</strong> 快速更换 SOCKS5 至：user:password@127.0.0.1:1080，您可将"?socks5=user:password@127.0.0.1:1080"参数添加到链接末尾，例如：<br>
+					&nbsp;&nbsp;https://${proxyhost}${hostName}/${uuid}<strong>?socks5=user:password@127.0.0.1:1080</strong><br>
+					<br>
+					<strong>5.</strong> 如需指定多个参数则需要使用'&'做间隔，例如：<br>
+					&nbsp;&nbsp;https://${proxyhost}${hostName}/${uuid}?sub=sub.google.com<strong>&</strong>proxyip=proxyip.fxxk.dedyn.io<br>
+				</div>
 			<script>
 			function copyToClipboard(text) {
 				navigator.clipboard.writeText(text).then(() => {
@@ -1386,6 +1405,18 @@ async function 生成配置信息(userID, hostName, sub, UA, RproxyIP, _url, env
 				}).catch(err => {
 					console.error('复制失败:', err);
 				});
+			}
+
+			function toggleNotice() {
+				const noticeContent = document.getElementById('noticeContent');
+				const noticeToggle = document.getElementById('noticeToggle');
+				if (noticeContent.style.display === 'none') {
+					noticeContent.style.display = 'block';
+					noticeToggle.textContent = '实用订阅技巧∧';
+				} else {
+					noticeContent.style.display = 'none'; 
+					noticeToggle.textContent = '实用订阅技巧∨';
+				}
 			}
 			</script>
 			---------------------------------------------------------------<br>
@@ -1873,7 +1904,7 @@ function 生成动态UUID(密钥) {
 	return Promise.all([当前UUIDPromise, 上一个UUIDPromise, 到期时间字符串]);
 }
 
-async function KV(request, env, txt = '/ADD.txt') {
+async function KV(request, env, txt = 'ADD.txt') {
 	try {
 		// POST请求处理
 		if (request.method === "POST") {
@@ -1973,18 +2004,9 @@ async function KV(request, env, txt = '/ADD.txt') {
 				################################################################<br>
 				${FileName} 优选订阅列表:<br>
 				---------------------------------------------------------------<br>
-				&nbsp;&nbsp;<a href="javascript:void(0);" id="noticeToggle" onclick="toggleNotice()">注意事项∨</a><br>
+				&nbsp;&nbsp;<strong><a href="javascript:void(0);" id="noticeToggle" onclick="toggleNotice()">注意事项∨</a></strong><br>
 				<div id="noticeContent" class="notice-content">
-					1. ADDAPI 如果是反代IP，可作为PROXYIP的话，可将"?proxyip=true"参数添加到链接末尾，例如：<br>
-					&nbsp;&nbsp;https://raw.githubusercontent.com/cmliu/WorkerVless2sub/main/addressesapi.txt?proxyip=true<br><br>
-					2. ADDAPI 如果是 <a href='https://github.com/XIU2/CloudflareSpeedTest'>CloudflareSpeedTest</a> 的 csv 结果文件，例如：<br>
-					&nbsp;&nbsp;https://raw.githubusercontent.com/cmliu/WorkerVless2sub/refs/heads/main/CloudflareSpeedTest.csv<br><br>
-					&nbsp;&nbsp;- 如需指定2053端口可将"?port=2053"参数添加到链接末尾，例如：<br>
-					&nbsp;&nbsp;https://raw.githubusercontent.com/cmliu/WorkerVless2sub/refs/heads/main/CloudflareSpeedTest.csv?port=2053<br><br>
-					&nbsp;&nbsp;- 如需指定节点备注可将"?id=CF优选"参数添加到链接末尾，例如：<br>
-					&nbsp;&nbsp;https://raw.githubusercontent.com/cmliu/WorkerVless2sub/refs/heads/main/CloudflareSpeedTest.csv?id=CF优选<br><br>
-					&nbsp;&nbsp;- 如需指定多个参数则需要使用'&'做间隔，例如：<br>
-					&nbsp;&nbsp;https://raw.githubusercontent.com/cmliu/WorkerVless2sub/refs/heads/main/CloudflareSpeedTest.csv?id=CF优选&port=2053<br>
+					${decodeURIComponent(atob('JTA5JTA5JTA5JTA5JTA5JTNDc3Ryb25nJTNFMS4lM0MlMkZzdHJvbmclM0UlMjBBRERBUEklMjAlRTUlQTYlODIlRTYlOUUlOUMlRTYlOTglQUYlRTUlOEYlOEQlRTQlQkIlQTNJUCVFRiVCQyU4QyVFNSU4RiVBRiVFNCVCRCU5QyVFNCVCOCVCQVBST1hZSVAlRTclOUElODQlRTglQUYlOUQlRUYlQkMlOEMlRTUlOEYlQUYlRTUlQjAlODYlMjIlM0Zwcm94eWlwJTNEdHJ1ZSUyMiVFNSU4RiU4MiVFNiU5NSVCMCVFNiVCNyVCQiVFNSU4QSVBMCVFNSU4OCVCMCVFOSU5MyVCRSVFNiU4RSVBNSVFNiU5QyVBQiVFNSVCMCVCRSVFRiVCQyU4QyVFNCVCRSU4QiVFNSVBNiU4MiVFRiVCQyU5QSUzQ2JyJTNFCiUwOSUwOSUwOSUwOSUwOSUyNm5ic3AlM0IlMjZuYnNwJTNCaHR0cHMlM0ElMkYlMkZyYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGY21saXUlMkZXb3JrZXJWbGVzczJzdWIlMkZtYWluJTJGYWRkcmVzc2VzYXBpLnR4dCUzQ3N0cm9uZyUzRSUzRnByb3h5aXAlM0R0cnVlJTNDJTJGc3Ryb25nJTNFJTNDYnIlM0UlM0NiciUzRQolMDklMDklMDklMDklMDklM0NzdHJvbmclM0UyLiUzQyUyRnN0cm9uZyUzRSUyMEFEREFQSSUyMCVFNSVBNiU4MiVFNiU5RSU5QyVFNiU5OCVBRiUyMCUzQ2ElMjBocmVmJTNEJTI3aHR0cHMlM0ElMkYlMkZnaXRodWIuY29tJTJGWElVMiUyRkNsb3VkZmxhcmVTcGVlZFRlc3QlMjclM0VDbG91ZGZsYXJlU3BlZWRUZXN0JTNDJTJGYSUzRSUyMCVFNyU5QSU4NCUyMGNzdiUyMCVFNyVCQiU5MyVFNiU5RSU5QyVFNiU5NiU4NyVFNCVCQiVCNiVFRiVCQyU4QyVFNCVCRSU4QiVFNSVBNiU4MiVFRiVCQyU5QSUzQ2JyJTNFCiUwOSUwOSUwOSUwOSUwOSUyNm5ic3AlM0IlMjZuYnNwJTNCaHR0cHMlM0ElMkYlMkZyYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGY21saXUlMkZXb3JrZXJWbGVzczJzdWIlMkZyZWZzJTJGaGVhZHMlMkZtYWluJTJGQ2xvdWRmbGFyZVNwZWVkVGVzdC5jc3YlM0NiciUzRSUzQ2JyJTNFCiUwOSUwOSUwOSUwOSUwOSUyNm5ic3AlM0IlMjZuYnNwJTNCLSUyMCVFNSVBNiU4MiVFOSU5QyU4MCVFNiU4QyU4NyVFNSVBRSU5QTIwNTMlRTclQUIlQUYlRTUlOEYlQTMlRTUlOEYlQUYlRTUlQjAlODYlMjIlM0Zwb3J0JTNEMjA1MyUyMiVFNSU4RiU4MiVFNiU5NSVCMCVFNiVCNyVCQiVFNSU4QSVBMCVFNSU4OCVCMCVFOSU5MyVCRSVFNiU4RSVBNSVFNiU5QyVBQiVFNSVCMCVCRSVFRiVCQyU4QyVFNCVCRSU4QiVFNSVBNiU4MiVFRiVCQyU5QSUzQ2JyJTNFCiUwOSUwOSUwOSUwOSUwOSUyNm5ic3AlM0IlMjZuYnNwJTNCaHR0cHMlM0ElMkYlMkZyYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGY21saXUlMkZXb3JrZXJWbGVzczJzdWIlMkZyZWZzJTJGaGVhZHMlMkZtYWluJTJGQ2xvdWRmbGFyZVNwZWVkVGVzdC5jc3YlM0NzdHJvbmclM0UlM0Zwb3J0JTNEMjA1MyUzQyUyRnN0cm9uZyUzRSUzQ2JyJTNFJTNDYnIlM0UKJTA5JTA5JTA5JTA5JTA5JTI2bmJzcCUzQiUyNm5ic3AlM0ItJTIwJUU1JUE2JTgyJUU5JTlDJTgwJUU2JThDJTg3JUU1JUFFJTlBJUU4JThBJTgyJUU3JTgyJUI5JUU1JUE0JTg3JUU2JUIzJUE4JUU1JThGJUFGJUU1JUIwJTg2JTIyJTNGaWQlM0RDRiVFNCVCQyU5OCVFOSU4MCU4OSUyMiVFNSU4RiU4MiVFNiU5NSVCMCVFNiVCNyVCQiVFNSU4QSVBMCVFNSU4OCVCMCVFOSU5MyVCRSVFNiU4RSVBNSVFNiU5QyVBQiVFNSVCMCVCRSVFRiVCQyU4QyVFNCVCRSU4QiVFNSVBNiU4MiVFRiVCQyU5QSUzQ2JyJTNFCiUwOSUwOSUwOSUwOSUwOSUyNm5ic3AlM0IlMjZuYnNwJTNCaHR0cHMlM0ElMkYlMkZyYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGY21saXUlMkZXb3JrZXJWbGVzczJzdWIlMkZyZWZzJTJGaGVhZHMlMkZtYWluJTJGQ2xvdWRmbGFyZVNwZWVkVGVzdC5jc3YlM0NzdHJvbmclM0UlM0ZpZCUzRENGJUU0JUJDJTk4JUU5JTgwJTg5JTNDJTJGc3Ryb25nJTNFJTNDYnIlM0UlM0NiciUzRQolMDklMDklMDklMDklMDklMjZuYnNwJTNCJTI2bmJzcCUzQi0lMjAlRTUlQTYlODIlRTklOUMlODAlRTYlOEMlODclRTUlQUUlOUElRTUlQTQlOUElRTQlQjglQUElRTUlOEYlODIlRTYlOTUlQjAlRTUlODglOTklRTklOUMlODAlRTglQTYlODElRTQlQkQlQkYlRTclOTQlQTglMjclMjYlMjclRTUlODElOUElRTklOTclQjQlRTklOUElOTQlRUYlQkMlOEMlRTQlQkUlOEIlRTUlQTYlODIlRUYlQkMlOUElM0NiciUzRQolMDklMDklMDklMDklMDklMjZuYnNwJTNCJTI2bmJzcCUzQmh0dHBzJTNBJTJGJTJGcmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSUyRmNtbGl1JTJGV29ya2VyVmxlc3Myc3ViJTJGcmVmcyUyRmhlYWRzJTJGbWFpbiUyRkNsb3VkZmxhcmVTcGVlZFRlc3QuY3N2JTNGaWQlM0RDRiVFNCVCQyU5OCVFOSU4MCU4OSUzQ3N0cm9uZyUzRSUyNiUzQyUyRnN0cm9uZyUzRXBvcnQlM0QyMDUzJTNDYnIlM0U='))}
 				</div>
 				<div class="editor-container">
 					${hasKV ? `
@@ -1993,7 +2015,7 @@ async function KV(request, env, txt = '/ADD.txt') {
 						id="content">${content}</textarea>
 					<div class="save-container">
 						<button class="back-btn" onclick="goBack()">返回配置页</button>
-						<button class="save-btn" onclick="saveContent()">保存</button>
+						<button class="save-btn" onclick="saveContent(this)">保存</button>
 						<span class="save-status" id="saveStatus"></span>
 					</div>
 					<br>
@@ -2019,20 +2041,90 @@ async function KV(request, env, txt = '/ADD.txt') {
 						textarea.value = text.replace(/：/g, ':');
 					}
 					
-					function saveContent() {
-						replaceFullwidthColon();
-						const newContent = textarea.value;
-						if (newContent !== originalContent) {
-							fetch(window.location.href, {
-								method: 'POST',
-								body: newContent
-							}).then(() => {
-								const now = new Date().toLocaleString();
-								document.title = \`编辑已保存 \${now}\`;
-								document.getElementById('saveStatus').textContent = \`已保存 \${now}\`;
-							}).catch(error => {
-								document.getElementById('saveStatus').textContent = \`保存失败: \${error.message}\`;
-							});
+					function saveContent(button) {
+						try {
+							const updateButtonText = (step) => {
+								button.textContent = \`保存中: \${step}\`;
+							};
+							// 检测是否为iOS设备
+							const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+							
+							// 仅在非iOS设备上执行replaceFullwidthColon
+							if (!isIOS) {
+								replaceFullwidthColon();
+							}
+							updateButtonText('开始保存');
+							button.disabled = true;
+							// 获取textarea内容和原始内容
+							const textarea = document.getElementById('content');
+							if (!textarea) {
+								throw new Error('找不到文本编辑区域');
+							}
+							updateButtonText('获取内容');
+							let newContent;
+							let originalContent;
+							try {
+								newContent = textarea.value || '';
+								originalContent = textarea.defaultValue || '';
+							} catch (e) {
+								console.error('获取内容错误:', e);
+								throw new Error('无法获取编辑内容');
+							}
+							updateButtonText('准备状态更新函数');
+							const updateStatus = (message, isError = false) => {
+								const statusElem = document.getElementById('saveStatus');
+								if (statusElem) {
+									statusElem.textContent = message;
+									statusElem.style.color = isError ? 'red' : '#666';
+								}
+							};
+							updateButtonText('准备按钮重置函数');
+							const resetButton = () => {
+								button.textContent = '保存';
+								button.disabled = false;
+							};
+							if (newContent !== originalContent) {
+								updateButtonText('发送保存请求');
+								fetch(window.location.href, {
+									method: 'POST',
+									body: newContent,
+									headers: {
+										'Content-Type': 'text/plain;charset=UTF-8'
+									},
+									cache: 'no-cache'
+								})
+								.then(response => {
+									updateButtonText('检查响应状态');
+									if (!response.ok) {
+										throw new Error(\`HTTP error! status: \${response.status}\`);
+									}
+									updateButtonText('更新保存状态');
+									const now = new Date().toLocaleString();
+									document.title = \`编辑已保存 \${now}\`;
+									updateStatus(\`已保存 \${now}\`);
+								})
+								.catch(error => {
+									updateButtonText('处理错误');
+									console.error('Save error:', error);
+									updateStatus(\`保存失败: \${error.message}\`, true);
+								})
+								.finally(() => {
+									resetButton();
+								});
+							} else {
+								updateButtonText('检查内容变化');
+								updateStatus('内容未变化');
+								resetButton();
+							}
+						} catch (error) {
+							console.error('保存过程出错:', error);
+							button.textContent = '保存';
+							button.disabled = false;
+							const statusElem = document.getElementById('saveStatus');
+							if (statusElem) {
+								statusElem.textContent = \`错误: \${error.message}\`;
+								statusElem.style.color = 'red';
+							}
 						}
 					}
 		
