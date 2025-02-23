@@ -1397,7 +1397,7 @@ async function 生成配置信息(userID, hostName, sub, UA, RproxyIP, _url, fak
 			<a href="javascript:void(0)" onclick="copyToClipboard('https://${proxyhost}${hostName}/${uuid}?sb','qrcode_3')" style="color:blue;text-decoration:underline;cursor:pointer;">https://${proxyhost}${hostName}/${uuid}?sb</a><br>
 			<div id="qrcode_3" style="margin: 10px 10px 10px 10px;"></div>
 			loon订阅地址:<br>
-			<a href="javascript:void(0)" onclick="copyToClipboard('https://${proxyhost}${hostName}/${uuid}?loon','qrcode_5')" style="color:blue;text-decoration:underline;cursor:pointer;">https://${proxyhost}${hostName}/${uuid}?sb</a><br>
+			<a href="javascript:void(0)" onclick="copyToClipboard('https://${proxyhost}${hostName}/${uuid}?loon','qrcode_5')" style="color:blue;text-decoration:underline;cursor:pointer;">https://${proxyhost}${hostName}/${uuid}?loon</a><br>
 			<div id="qrcode_5" style="margin: 10px 10px 10px 10px;"></div>
 			<strong><a href="javascript:void(0);" id="noticeToggle" onclick="toggleNotice()">实用订阅技巧∨</a></strong><br>
 				<div id="noticeContent" class="notice-content" style="display: none;">
