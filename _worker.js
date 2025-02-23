@@ -1302,12 +1302,14 @@ async function 生成配置信息(userID, hostName, sub, UA, RproxyIP, _url, fak
 			addresses = addresses.concat('127.0.0.1:1234#CFnat');
 			let counter = 1;
 			if (hostName.includes("worker") || hostName.includes("notls")) {
+				const randomHttpPorts = httpPorts.concat('80');
 				addressesnotls = addressesnotls.concat(
-					cfips.map(cidr => generateRandomIPFromCIDR(cidr) + ':' + httpPorts[Math.floor(Math.random() * httpPorts.length)] + '#CF随机节点' + String(counter++).padStart(2, '0'))
+					cfips.map(cidr => generateRandomIPFromCIDR(cidr) + ':' + randomHttpPorts[Math.floor(Math.random() * randomHttpPorts.length)] + '#CF随机节点' + String(counter++).padStart(2, '0'))
 				);
 			} else {
+				const randomHttpPorts = httpPorts.concat('443');
 				addresses = addresses.concat(
-					cfips.map(cidr => generateRandomIPFromCIDR(cidr) + ':' + httpsPorts[Math.floor(Math.random() * httpsPorts.length)] + '#CF随机节点' + String(counter++).padStart(2, '0'))
+					cfips.map(cidr => generateRandomIPFromCIDR(cidr) + ':' + randomHttpPorts[Math.floor(Math.random() * randomHttpPorts.length)] + '#CF随机节点' + String(counter++).padStart(2, '0'))
 				);
 			}
 		}
