@@ -89,10 +89,10 @@ export default {
 			proxyIPs = await 整理(proxyIP);
 			proxyIP = proxyIPs[Math.floor(Math.random() * proxyIPs.length)];
 
-			socks5Address = env.SOCKS5 || socks5Address;
+			socks5Address = env.HTTP || env.SOCKS5 || socks5Address;
 			socks5s = await 整理(socks5Address);
 			socks5Address = socks5s[Math.floor(Math.random() * socks5s.length)];
-			enableHttp = socks5Address.toLowerCase().includes('http://');
+			enableHttp = env.HTTP ? true : socks5Address.toLowerCase().includes('http://');
 			socks5Address = socks5Address.split('//')[1] || socks5Address;
 			if (env.GO2SOCKS5) go2Socks5s = await 整理(env.GO2SOCKS5);
 			if (env.CFPORTS) httpsPorts = await 整理(env.CFPORTS);
