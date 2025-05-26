@@ -2389,7 +2389,7 @@ async function resolveToIPv6(target) {
 
 	// 查询NAT64 IPv6地址
 	async function queryNAT64(domain) {
-		const socket = connect(btoa('ZG90Lm5hdDY0LmRrOjg1Mw=='), {
+		const socket = connect(atob('ZG90Lm5hdDY0LmRrOjg1Mw=='), {
 			secureTransport: 'on',
 			allowHalfOpen: false
 		});
@@ -2528,11 +2528,11 @@ async function resolveToIPv6(target) {
 
 		let domain;
 		if (isIPv4(target)) {
-			domain = target + btoa('LmlwLjA5MDIyNy54eXo='); // IPv4转换为NAT64域名
+			domain = target + atob('LmlwLjA5MDIyNy54eXo='); // IPv4转换为NAT64域名
 		} else {
 			// 域名先解析IPv4再转NAT64
 			const ipv4 = await fetchIPv4(target);
-			domain = ipv4 + btoa('LmlwLjA5MDIyNy54eXo=');
+			domain = ipv4 + atob('LmlwLjA5MDIyNy54eXo=');
 		}
 
 		return await queryNAT64(domain);
