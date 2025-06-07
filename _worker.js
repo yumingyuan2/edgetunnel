@@ -2935,6 +2935,20 @@ async function bestIP(request, env, txt = 'ADD.txt') {
         .back-button:hover {
             background-color: #455A64;
         }
+        .save-warning {
+            margin-top: 10px;
+            background-color: #fff3e0;
+            border: 2px solid #ff9800;
+            border-radius: 6px;
+            padding: 12px;
+            color: #e65100;
+            font-weight: bold;
+        }
+        .save-warning small {
+            font-size: 14px;
+            line-height: 1.5;
+            display: block;
+        }
         .message {
             padding: 10px;
             margin: 10px 0;
@@ -3013,6 +3027,9 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             <button class="save-button" id="save-btn" onclick="saveIPs()" disabled>覆盖保存优选IP</button>
             <button class="append-button" id="append-btn" onclick="appendIPs()" disabled>追加保存优选IP</button>
             <button class="back-button" id="back-btn" onclick="goBack()">返回配置页</button>
+        </div>
+        <div class="save-warning">
+            <small>⚠️ 重要提醒："覆盖保存优选IP"会完全覆盖当前 addresses/ADD 优选内容，请慎重考虑！建议优先使用"追加保存优选IP"功能。</small>
         </div>
         <div id="message" class="message"></div>
     </div>
