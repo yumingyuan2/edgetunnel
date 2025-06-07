@@ -3010,8 +3010,8 @@ async function bestIP(request, env, txt = 'ADD.txt') {
         </div>
         <div class="button-group">
             <button class="test-button" id="test-btn" onclick="startTest()">开始延迟测试</button>
-            <button class="save-button" id="save-btn" onclick="saveIPs()" disabled>保存优选IP</button>
-            <button class="append-button" id="append-btn" onclick="appendIPs()" disabled>追加优选IP</button>
+            <button class="save-button" id="save-btn" onclick="saveIPs()" disabled>覆盖保存优选IP</button>
+            <button class="append-button" id="append-btn" onclick="appendIPs()" disabled>追加保存优选IP</button>
             <button class="back-button" id="back-btn" onclick="goBack()">返回配置页</button>
         </div>
         <div id="message" class="message"></div>
