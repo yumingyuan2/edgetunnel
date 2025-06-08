@@ -2178,6 +2178,17 @@ async function KV(request, env, txt = 'ADD.txt') {
 					.back-btn:hover {
 						background: #555;
 					}
+					.bestip-btn {
+						background: #2196F3;
+						padding: 6px 15px;
+						color: white;
+						border: none;
+						border-radius: 4px;
+						cursor: pointer;
+					}
+					.bestip-btn:hover {
+						background: #1976D2;
+					}
 					.save-status {
 						color: #666;
 					}
@@ -2204,6 +2215,7 @@ async function KV(request, env, txt = 'ADD.txt') {
 						id="content">${content}</textarea>
 					<div class="save-container">
 						<button class="back-btn" onclick="goBack()">返回配置页</button>
+						<button class="bestip-btn" onclick="goBestIP()">在线优选IP</button>
 						<button class="save-btn" onclick="saveContent(this)">保存</button>
 						<span class="save-status" id="saveStatus"></span>
 					</div>
@@ -2223,6 +2235,12 @@ async function KV(request, env, txt = 'ADD.txt') {
 						const currentUrl = window.location.href;
 						const parentUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
 						window.location.href = parentUrl;
+					}
+		
+					function goBestIP() {
+						const currentUrl = window.location.href;
+						const parentUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
+						window.location.href = parentUrl + '/bestip';
 					}
 		
 					function replaceFullwidthColon() {
@@ -2561,6 +2579,16 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             } else if (ipSource === 'cm') {
                 // CM整理列表
                 response = await fetch('https://raw.githubusercontent.com/cmliu/cmliu/main/CF-CIDR.txt');
+            } else if (ipSource === 'baipiao') {
+                // 反代IP列表 (直接IP，非CIDR)
+                response = await fetch('https://raw.githubusercontent.com/cmliu/ACL4SSR/main/baipiao.txt');
+                const text = response.ok ? await response.text() : '';
+                // 直接返回IP列表，不进行CIDR生成
+                const ips = text.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line && !line.startsWith('#'));
+                console.log(`反代IP列表获取到${ips.length}个IP`);
+                return ips;
             } else {
                 // CF官方列表 (默认)
                 response = await fetch('https://www.cloudflare.com/ips-v4/');
@@ -2817,6 +2845,19 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             border-radius: 5px;
             margin: 20px 0;
         }
+        .test-info {
+            margin-top: 15px;
+            padding: 12px;
+            background-color: #f3e5f5;
+            border: 1px solid #ce93d8;
+            border-radius: 6px;
+            color: #4a148c;
+        }
+        .test-info p {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
         .proxy-warning {
             color: #d32f2f !important;
             font-weight: bold !important;
@@ -2928,6 +2969,22 @@ async function bestIP(request, env, txt = 'ADD.txt') {
         .append-button:not(:disabled):hover {
             background-color: #F57C00;
         }
+        .edit-button {
+            background-color: #9C27B0;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .edit-button:hover {
+            background-color: #7B1FA2;
+        }
         .back-button {
             background-color: #607D8B;
             color: white;
@@ -3017,6 +3074,9 @@ async function bestIP(request, env, txt = 'ADD.txt') {
         <div class="progress">
             <div class="progress-bar" id="progress-bar"></div>
         </div>
+        <div class="test-info">
+            <p><strong>📊 测试说明：</strong>当前优选方式仅进行网络延迟测试，主要评估连接响应速度，并未包含带宽速度测试。延迟测试可快速筛选出响应最快的IP节点，适合日常使用场景的初步优选。</p>
+        </div>
     </div>
     
     <div class="test-controls">
@@ -3027,6 +3087,7 @@ async function bestIP(request, env, txt = 'ADD.txt') {
                 <option value="cm">CM整理列表</option>
                 <option value="as13335">AS13335列表</option>
                 <option value="as209242">AS209242列表</option>
+                <option value="baipiao">反代IP列表</option>
             </select>
 
             <label for="port-select" style="margin-left: 20px;">端口：</label>
@@ -3043,6 +3104,7 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             <button class="test-button" id="test-btn" onclick="startTest()">开始延迟测试</button>
             <button class="save-button" id="save-btn" onclick="saveIPs()" disabled>覆盖保存优选IP</button>
             <button class="append-button" id="append-btn" onclick="appendIPs()" disabled>追加保存优选IP</button>
+            <button class="edit-button" id="edit-btn" onclick="goEdit()">编辑优选列表</button>
             <button class="back-button" id="back-btn" onclick="goBack()">返回配置页</button>
         </div>
         <div class="save-warning">
@@ -3128,6 +3190,7 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             const testBtn = document.getElementById('test-btn');
             const saveBtn = document.getElementById('save-btn');
             const appendBtn = document.getElementById('append-btn');
+            const editBtn = document.getElementById('edit-btn');
             const backBtn = document.getElementById('back-btn');
             const portSelect = document.getElementById('port-select');
             const ipSourceSelect = document.getElementById('ip-source-select');
@@ -3135,6 +3198,7 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             testBtn.disabled = true;
             saveBtn.disabled = true;
             appendBtn.disabled = true;
+            editBtn.disabled = true;
             backBtn.disabled = true;
             portSelect.disabled = true;
             ipSourceSelect.disabled = true;
@@ -3142,11 +3206,13 @@ async function bestIP(request, env, txt = 'ADD.txt') {
         
         function enableButtons() {
             const testBtn = document.getElementById('test-btn');
+            const editBtn = document.getElementById('edit-btn');
             const backBtn = document.getElementById('back-btn');
             const portSelect = document.getElementById('port-select');
             const ipSourceSelect = document.getElementById('ip-source-select');
             
             testBtn.disabled = false;
+            editBtn.disabled = false;
             backBtn.disabled = false;
             portSelect.disabled = false;
             ipSourceSelect.disabled = false;
@@ -3233,6 +3299,12 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             }
         }
         
+        function goEdit() {
+            const currentUrl = window.location.href;
+            const parentUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
+            window.location.href = parentUrl + '/edit';
+        }
+        
         function goBack() {
             const currentUrl = window.location.href;
             const parentUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
@@ -3242,24 +3314,28 @@ async function bestIP(request, env, txt = 'ADD.txt') {
         async function testIP(ip, port) {
             const timeout = 999;
             
+            // 解析IP格式
+            const parsedIP = parseIPFormat(ip, port);
+            if (!parsedIP) {
+                return null;
+            }
+            
             // 第一次测试
-            const firstResult = await singleTest(ip, port, timeout);
+            const firstResult = await singleTest(parsedIP.host, parsedIP.port, timeout);
             if (!firstResult) {
                 return null; // 第一次测试失败，直接返回
             }
             
-            // 第一次测试成功，再进行2次测试
-            console.log(\`IP \${ip}:\${port} 第一次测试成功: \${firstResult.latency}ms，进行额外测试...\`);
+            // 第一次测试成功，再进行第二次测试
+            console.log(\`IP \${parsedIP.host}:\${parsedIP.port} 第一次测试成功: \${firstResult.latency}ms，进行第二次测试...\`);
             
             const results = [firstResult];
             
-            // 进行第二次和第三次测试
-            for (let i = 2; i <= 3; i++) {
-                const result = await singleTest(ip, port, timeout);
-                if (result) {
-                    results.push(result);
-                    console.log(\`IP \${ip}:\${port} 第\${i}次测试: \${result.latency}ms\`);
-                }
+            // 进行第二次测试
+            const secondResult = await singleTest(parsedIP.host, parsedIP.port, timeout);
+            if (secondResult) {
+                results.push(secondResult);
+                console.log(\`IP \${parsedIP.host}:\${parsedIP.port} 第二次测试: \${secondResult.latency}ms\`);
             }
             
             // 取最低延迟
@@ -3267,19 +3343,62 @@ async function bestIP(request, env, txt = 'ADD.txt') {
                 current.latency < best.latency ? current : best
             );
             
-            // 将延迟除以2并向下取整（因为是往返时间）
-            const displayLatency = Math.floor(bestResult.latency / 2);
+            const displayLatency = Math.floor(bestResult.latency);
             
-            console.log(\`IP \${ip}:\${port} 最终结果: \${displayLatency}ms (原始: \${bestResult.latency}ms, 共\${results.length}次有效测试)\`);
+            console.log(\`IP \${parsedIP.host}:\${parsedIP.port} 最终结果: \${displayLatency}ms (原始: \${bestResult.latency}ms, 共\${results.length}次有效测试)\`);
+            
+            // 生成显示格式
+            const comment = parsedIP.comment || 'CF优选IP';
+            const display = \`\${parsedIP.host}:\${parsedIP.port}#\${comment} \${displayLatency}ms\`;
             
             return {
-                ip: ip,
-                port: port,
+                ip: parsedIP.host,
+                port: parsedIP.port,
                 latency: displayLatency,
                 originalLatency: bestResult.latency,
                 testCount: results.length,
-                display: \`\${ip}:\${port}#CF优选IP \${displayLatency}ms\`
+                comment: comment,
+                display: display
             };
+        }
+        
+        // 新增：解析IP格式的函数
+        function parseIPFormat(ipString, defaultPort) {
+            try {
+                let host, port, comment;
+                
+                // 先处理注释部分（#之后的内容）
+                let mainPart = ipString;
+                if (ipString.includes('#')) {
+                    const parts = ipString.split('#');
+                    mainPart = parts[0];
+                    comment = parts[1];
+                }
+                
+                // 处理端口部分
+                if (mainPart.includes(':')) {
+                    const parts = mainPart.split(':');
+                    host = parts[0];
+                    port = parseInt(parts[1]);
+                } else {
+                    host = mainPart;
+                    port = parseInt(defaultPort);
+                }
+                
+                // 验证IP格式
+                if (!host || !port || isNaN(port)) {
+                    return null;
+                }
+                
+                return {
+                    host: host.trim(),
+                    port: port,
+                    comment: comment ? comment.trim() : null
+                };
+            } catch (error) {
+                console.error('解析IP格式失败:', ipString, error);
+                return null;
+            }
         }
         
         async function singleTest(ip, port, timeout) {
@@ -3402,6 +3521,9 @@ async function bestIP(request, env, txt = 'ADD.txt') {
                     break;
                 case 'as209242':
                     ipSourceName = 'AS209242';
+                    break;
+                case 'baipiao':
+                    ipSourceName = '反代IP';
                     break;
                 default:
                     ipSourceName = '未知';
