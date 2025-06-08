@@ -2549,12 +2549,20 @@ async function bestIP(request, env, txt = 'ADD.txt') {
     const country = request.cf?.country || 'CN';
     const url = new URL(request.url);
 
-    async function GetCFIPs() {
+    async function GetCFIPs(ipSource = 'official') {
         try {
-            // 首先尝试第一个URL
-            let response = await fetch('https://raw.githubusercontent.com/ipverse/asn-ip/master/as/13335/ipv4-aggregated.txt');
-            if (!response.ok) {
-                // 如果失败，尝试第二个URL
+            let response;
+            if (ipSource === 'as13335') {
+                // AS13335列表
+                response = await fetch('https://raw.githubusercontent.com/ipverse/asn-ip/master/as/13335/ipv4-aggregated.txt');
+            } else if (ipSource === 'as209242') {
+                // AS209242列表
+                response = await fetch('https://raw.githubusercontent.com/ipverse/asn-ip/master/as/209242/ipv4-aggregated.txt');
+            } else if (ipSource === 'cm') {
+                // CM整理列表
+                response = await fetch('https://raw.githubusercontent.com/cmliu/cmliu/main/CF-CIDR.txt');
+            } else {
+                // CF官方列表 (默认)
                 response = await fetch('https://www.cloudflare.com/ips-v4/');
             }
 
@@ -2772,12 +2780,13 @@ async function bestIP(request, env, txt = 'ADD.txt') {
         }
     }
 
-    const cfIPs = await GetCFIPs();
+    // 移除初始IP加载，改为在前端动态加载
+    const cfIPs = []; // 初始为空数组
 
     // 判断是否为中国用户
     const isChina = country === 'CN';
     const countryDisplayClass = isChina ? '' : 'proxy-warning';
-    const countryDisplayText = isChina ? country : `${country} ⚠️`;
+    const countryDisplayText = isChina ? `${country}` : `${country} ⚠️`;
 
     const html = `
     <!DOCTYPE html>
@@ -2986,16 +2995,6 @@ async function bestIP(request, env, txt = 'ADD.txt') {
     <body>
     <h1>在线优选IP</h1>
     
-    <div class="stats">
-        <h2>统计信息</h2>
-        <p><strong>您的国家：</strong><span class="${countryDisplayClass}">${countryDisplayText}</span></p>
-        <p><strong>获取到的IP总数：</strong>${cfIPs.length} 个</p>
-        <p><strong>测试进度：</strong><span id="progress-text">未开始</span></p>
-        <div class="progress">
-            <div class="progress-bar" id="progress-bar"></div>
-        </div>
-    </div>
-    
     ${!isChina ? `
     <div class="warning-notice">
         <h3>🚨 代理检测警告</h3>
@@ -3009,12 +3008,30 @@ async function bestIP(request, env, txt = 'ADD.txt') {
         <p><strong>建议操作：</strong>请关闭所有代理软件（VPN、科学上网工具等），确保处于直连网络环境后重新访问本页面。</p>
     </div>
     ` : ''}
+
+    <div class="stats">
+        <h2>统计信息</h2>
+        <p><strong>您的国家：</strong><span class="${countryDisplayClass}">${countryDisplayText}</span></p>
+        <p><strong>获取到的IP总数：</strong><span id="ip-count">点击开始测试后加载</span></p>
+        <p><strong>测试进度：</strong><span id="progress-text">未开始</span></p>
+        <div class="progress">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+    </div>
     
     <div class="test-controls">
         <div class="port-selector">
-            <label for="port-select">选择端口：</label>
+            <label for="ip-source-select">IP库：</label>
+            <select id="ip-source-select">
+                <option value="official">CF官方列表</option>
+                <option value="cm">CM整理列表</option>
+                <option value="as13335">AS13335列表</option>
+                <option value="as209242">AS209242列表</option>
+            </select>
+
+            <label for="port-select" style="margin-left: 20px;">端口：</label>
             <select id="port-select">
-                <option value="443" selected>443</option>
+                <option value="443">443</option>
                 <option value="2053">2053</option>
                 <option value="2083">2083</option>
                 <option value="2087">2087</option>
@@ -3036,13 +3053,55 @@ async function bestIP(request, env, txt = 'ADD.txt') {
     
     <h2>IP列表 <span id="result-count"></span></h2>
     <div class="ip-list" id="ip-list">
-        ${cfIPs.map(ip => `<div class="ip-item">${ip}</div>`).join('')}
+        <div class="ip-item">请选择端口和IP库，然后点击"开始延迟测试"加载IP列表</div>
     </div>
     
     <script>
-        const originalIPs = ${JSON.stringify(cfIPs)};
+        let originalIPs = []; // 改为动态加载
         let testResults = [];
         let displayedResults = []; // 新增：存储当前显示的结果
+        
+        // 新增：本地存储管理
+        const StorageKeys = {
+            PORT: 'cf-ip-test-port',
+            IP_SOURCE: 'cf-ip-test-source'
+        };
+        
+        // 初始化页面设置
+        function initializeSettings() {
+            const portSelect = document.getElementById('port-select');
+            const ipSourceSelect = document.getElementById('ip-source-select');
+            
+            // 从本地存储读取上次的选择
+            const savedPort = localStorage.getItem(StorageKeys.PORT);
+            const savedIPSource = localStorage.getItem(StorageKeys.IP_SOURCE);
+            
+            // 恢复端口选择
+            if (savedPort && portSelect.querySelector(\`option[value="\${savedPort}"]\`)) {
+                portSelect.value = savedPort;
+            } else {
+                portSelect.value = '8443'; // 默认值
+            }
+            
+            // 恢复IP库选择
+            if (savedIPSource && ipSourceSelect.querySelector(\`option[value="\${savedIPSource}"]\`)) {
+                ipSourceSelect.value = savedIPSource;
+            } else {
+                ipSourceSelect.value = 'official'; // 默认值改为CF官方列表
+            }
+            
+            // 添加事件监听器保存选择
+            portSelect.addEventListener('change', function() {
+                localStorage.setItem(StorageKeys.PORT, this.value);
+            });
+            
+            ipSourceSelect.addEventListener('change', function() {
+                localStorage.setItem(StorageKeys.IP_SOURCE, this.value);
+            });
+        }
+        
+        // 页面加载完成后初始化设置
+        document.addEventListener('DOMContentLoaded', initializeSettings);
         
         function showMessage(text, type = 'success') {
             const messageDiv = document.getElementById('message');
@@ -3071,22 +3130,26 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             const appendBtn = document.getElementById('append-btn');
             const backBtn = document.getElementById('back-btn');
             const portSelect = document.getElementById('port-select');
+            const ipSourceSelect = document.getElementById('ip-source-select');
             
             testBtn.disabled = true;
             saveBtn.disabled = true;
             appendBtn.disabled = true;
             backBtn.disabled = true;
             portSelect.disabled = true;
+            ipSourceSelect.disabled = true;
         }
         
         function enableButtons() {
             const testBtn = document.getElementById('test-btn');
             const backBtn = document.getElementById('back-btn');
             const portSelect = document.getElementById('port-select');
+            const ipSourceSelect = document.getElementById('ip-source-select');
             
             testBtn.disabled = false;
             backBtn.disabled = false;
             portSelect.disabled = false;
+            ipSourceSelect.disabled = false;
             updateButtonStates();
         }
         
@@ -3299,26 +3362,78 @@ async function bestIP(request, env, txt = 'ADD.txt') {
         async function startTest() {
             const testBtn = document.getElementById('test-btn');
             const portSelect = document.getElementById('port-select');
+            const ipSourceSelect = document.getElementById('ip-source-select');
             const progressBar = document.getElementById('progress-bar');
             const progressText = document.getElementById('progress-text');
             const ipList = document.getElementById('ip-list');
             const resultCount = document.getElementById('result-count');
+            const ipCount = document.getElementById('ip-count');
             
             const selectedPort = portSelect.value;
+            const selectedIPSource = ipSourceSelect.value;
+            
+            // 保存当前选择到本地存储
+            localStorage.setItem(StorageKeys.PORT, selectedPort);
+            localStorage.setItem(StorageKeys.IP_SOURCE, selectedIPSource);
             
             testBtn.disabled = true;
-            testBtn.textContent = '测试中...';
+            testBtn.textContent = '加载IP列表...';
             portSelect.disabled = true;
+            ipSourceSelect.disabled = true;
             testResults = [];
             displayedResults = []; // 重置显示结果
-            ipList.innerHTML = '<div class="ip-item">测试中，请稍候...</div>';
+            ipList.innerHTML = '<div class="ip-item">正在加载IP列表，请稍候...</div>';
             updateButtonStates(); // 更新按钮状态
             
             // 重置进度条
             progressBar.style.width = '0%';
+            
+            // 根据IP库类型显示对应的加载信息
+            let ipSourceName = '';
+            switch(selectedIPSource) {
+                case 'official':
+                    ipSourceName = 'CF官方';
+                    break;
+                case 'cm':
+                    ipSourceName = 'CM整理';
+                    break;
+                case 'as13335':
+                    ipSourceName = 'AS13335';
+                    break;
+                case 'as209242':
+                    ipSourceName = 'AS209242';
+                    break;
+                default:
+                    ipSourceName = '未知';
+            }
+            
+            progressText.textContent = \`正在加载 \${ipSourceName} IP列表...\`;
+            
+            // 加载IP列表
+            originalIPs = await loadIPs(selectedIPSource);
+            
+            if (originalIPs.length === 0) {
+                ipList.innerHTML = '<div class="ip-item">加载IP列表失败，请重试</div>';
+                ipCount.textContent = '0 个';
+                testBtn.disabled = false;
+                testBtn.textContent = '开始延迟测试';
+                portSelect.disabled = false;
+                ipSourceSelect.disabled = false;
+                progressText.textContent = '加载失败';
+                return;
+            }
+            
+            // 更新IP数量显示
+            ipCount.textContent = \`\${originalIPs.length} 个\`;
+            
+            // 显示加载的IP列表
+            ipList.innerHTML = originalIPs.map(ip => \`<div class="ip-item">\${ip}</div>\`).join('');
+            
+            // 开始测试
+            testBtn.textContent = '测试中...';
             progressText.textContent = \`开始测试端口 \${selectedPort}...\`;
             
-            // 使用32个并发线程测试
+            // 使用16个并发线程测试
             const results = await testIPsWithConcurrency(originalIPs, selectedPort, 16);
             
             // 按延迟排序
@@ -3330,7 +3445,27 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             testBtn.disabled = false;
             testBtn.textContent = '重新测试';
             portSelect.disabled = false;
-            progressText.textContent = \`完成 - 有效IP: \${testResults.length}/\${originalIPs.length} (端口: \${selectedPort})\`;
+            ipSourceSelect.disabled = false;
+            progressText.textContent = \`完成 - 有效IP: \${testResults.length}/\${originalIPs.length} (端口: \${selectedPort}, IP库: \${ipSourceName})\`;
+        }
+        
+        // 新增：加载IP列表的函数
+        async function loadIPs(ipSource) {
+            try {
+                const response = await fetch(\`/?loadIPs=\${ipSource}\`, {
+                    method: 'GET'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load IPs');
+                }
+                
+                const data = await response.json();
+                return data.ips || [];
+            } catch (error) {
+                console.error('加载IP列表失败:', error);
+                return [];
+            }
         }
         
         function displayResults() {
@@ -3367,6 +3502,18 @@ async function bestIP(request, env, txt = 'ADD.txt') {
     </body>
     </html>
     `;
+
+    // 处理加载IP的请求
+    if (url.searchParams.get('loadIPs')) {
+        const ipSource = url.searchParams.get('loadIPs');
+        const ips = await GetCFIPs(ipSource);
+        
+        return new Response(JSON.stringify({ ips }), {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+    }
 
     return new Response(html, {
         headers: {
