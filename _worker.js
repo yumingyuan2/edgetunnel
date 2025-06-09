@@ -3206,6 +3206,39 @@ async function bestIP(request, env, txt = 'ADD.txt') {
         .save-tip strong {
             color: #1b5e20;
         }
+        .warm-tips {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #fff3e0;
+            border: 2px solid #ff9800;
+            border-radius: 8px;
+            color: #e65100;
+        }
+        .warm-tips h3 {
+            margin: 0 0 10px 0;
+            color: #f57c00;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .warm-tips p {
+            margin: 8px 0;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        .warm-tips ul {
+            margin: 10px 0 10px 20px;
+            line-height: 1.6;
+        }
+        .warm-tips li {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .warm-tips strong {
+            color: #e65100;
+            font-weight: bold;
+        }
     </style>
     </head>
     <body>
@@ -3238,6 +3271,18 @@ async function bestIP(request, env, txt = 'ADD.txt') {
         </div>
     </div>
     
+    <div class="warm-tips" id="warm-tips">
+        <h3>💡 温馨提示</h3>
+        <p><strong>优选完成但测试"真连接延迟"为 -1？</strong>这很有可能是您的网络运营商对你的请求进行了阻断。</p>
+        <p><strong>建议尝试以下解决方案：</strong></p>
+        <ul>
+            <li><strong>更换端口：</strong>尝试使用其他端口（如 2053、2083、2087、2096、8443）</li>
+            <li><strong>更换IP库：</strong>切换到不同的IP来源（CM整理列表、AS13335列表等）</li>
+            <li><strong>更换自定义域名：</strong>如果您使用的还是免费域名，那么您更应该尝试一下更换自定义域</li>
+        </ul>
+        <p>💡 <strong>小贴士：</strong>不同地区和网络环境对各端口的支持情况可能不同，多尝试几个端口组合通常能找到适合的IP。</p>
+    </div>
+
     <div class="test-controls">
         <div class="port-selector">
             <label for="ip-source-select">IP库：</label>
