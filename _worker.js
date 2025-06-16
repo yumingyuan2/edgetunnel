@@ -200,6 +200,7 @@ export default {
 								"Content-Disposition": `attachment; filename=${FileName}; filename*=utf-8''${encodeURIComponent(FileName)}`,
 								//"Content-Type": "text/plain;charset=utf-8",
 								"Profile-Update-Interval": "6",
+                                "profile-web-page-url": request.url.includes('?') ? request.url.split('?')[0] : request.url,
 								"Subscription-Userinfo": `upload=${pagesSum}; download=${workersSum}; total=${total}; expire=${expire}`,
 							}
 						});
