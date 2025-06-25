@@ -3,6 +3,7 @@ import { connect } from 'cloudflare:sockets';
 
 let userID = '';
 let proxyIP = '';
+let DNS64Server = '';
 //let sub = '';
 let subConverter = atob('U1VCQVBJLkNNTGl1c3Nzcy5uZXQ=');
 let subConfig = atob('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL0FDTDRTU1IvQUNMNFNTUi9tYXN0ZXIvQ2xhc2gvY29uZmlnL0FDTDRTU1JfT25saW5lX01pbmlfTXVsdGlNb2RlLmluaQ==');
@@ -88,7 +89,7 @@ export default {
             proxyIP = env.PROXYIP || env.proxyip || proxyIP;
             proxyIPs = await 整理(proxyIP);
             proxyIP = proxyIPs[Math.floor(Math.random() * proxyIPs.length)];
-
+            DNS64Server = env.DNS64 || env.NAT64 || (DNS64Server != '' ? DNS64Server : atob("ZG90Lm5hdDY0LmRr"));
             socks5Address = env.HTTP || env.SOCKS5 || socks5Address;
             socks5s = await 整理(socks5Address);
             socks5Address = socks5s[Math.floor(Math.random() * socks5s.length)];
@@ -2411,9 +2412,9 @@ async function resolveToIPv6(target) {
 
     // 查询NAT64 IPv6地址
     async function queryNAT64(domain) {
-        const socket = connect(atob('ZG90Lm5hdDY0LmRrOjg1Mw=='), {
-            secureTransport: 'on',
-            allowHalfOpen: false
+        const socket = connect({
+            hostname: isIPv6(DNS64Server) ? `[${DNS64Server}]` : DNS64Server,
+            port: 53
         });
 
         const writer = socket.writable.getWriter();
