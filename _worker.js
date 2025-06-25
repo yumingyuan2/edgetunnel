@@ -89,7 +89,7 @@ export default {
             proxyIP = env.PROXYIP || env.proxyip || proxyIP;
             proxyIPs = await 整理(proxyIP);
             proxyIP = proxyIPs[Math.floor(Math.random() * proxyIPs.length)];
-            DNS64Server = env.DNS64 || env.NAT64 || (DNS64Server != '' ? DNS64Server : atob("ZG90Lm5hdDY0LmRr"));
+            DNS64Server = env.DNS64 || env.NAT64 || (DNS64Server != '' ? DNS64Server : atob("ZG5zNjQuYWJxLnp0dmkub3Jn"));
             socks5Address = env.HTTP || env.SOCKS5 || socks5Address;
             socks5s = await 整理(socks5Address);
             socks5Address = socks5s[Math.floor(Math.random() * socks5s.length)];
@@ -2558,10 +2558,11 @@ async function resolveToIPv6(target) {
             domain = ipv4 + atob('LmlwLjA5MDIyNy54eXo=');
         }
 
-        return await queryNAT64(domain);
+        const nat64 = await queryNAT64(domain)
+        return isIPv6(nat64) ? nat64 : atob('cHJveHlpcC5jbWxpdXNzc3MubmV0');;
     } catch (error) {
         console.error('解析错误:', error);
-        return `解析失败: ${error.message}`;
+        return atob('cHJveHlpcC5jbWxpdXNzc3MubmV0');;
     }
 }
 
