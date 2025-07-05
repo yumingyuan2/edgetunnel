@@ -183,7 +183,12 @@ export default {
                     let pagesSum = UD;
                     let workersSum = UD;
                     let total = 24 * 1099511627776;
-
+                    if (env.CF_EMAIL && env.CF_APIKEY){
+                        const usage = await getUsage(env.CF_ID, env.CF_EMAIL, env.CF_APIKEY, env.CF_ALL);
+                        pagesSum = usage[1];
+                        workersSum = usage[2];
+                        total = usage[0];
+                    }
                     if (userAgent && userAgent.includes('mozilla')) {
                         return new Response(维列斯Config, {
                             status: 200,
@@ -3966,4 +3971,99 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             'Content-Type': 'text/html; charset=UTF-8',
         },
     });
+}
+
+async function getUsage(accountId, email, apikey, all = 100000) {
+    async function getAccountId(email, apikey, accountIndex = 0) {
+        const response = await fetch("https://api.cloudflare.com/client/v4/accounts", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "X-AUTH-EMAIL": email,
+                "X-AUTH-KEY": apikey,
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Cloudflare API 错误: ${response.status} ${response.statusText}`, errorText);
+            throw new Error(`Cloudflare API 请求失败: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+
+        const res = await response.json();
+        // console.log(res)
+        const name = res?.result?.[accountIndex]?.name
+        const id = res?.result?.[accountIndex]?.id
+        console.log(`默认取第 ${accountIndex} 项\n名称: ${name}, 账号 ID: ${id}`)
+        if (!id) throw new Error("找不到账号 ID")
+        return id
+    }
+    // 验证必需的环境变量
+    if (!accountId)  accountId = await getAccountId(email, apikey);
+
+    const now = new Date();
+    // End Time
+    const endDate = now.toISOString();
+    // Start Time
+    now.setUTCHours(0, 0, 0, 0);
+    const startDate = now.toISOString();
+
+    const response = await fetch("https://api.cloudflare.com/client/v4/graphql", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-AUTH-EMAIL": email,
+            "X-AUTH-KEY": apikey,
+        },
+        body: JSON.stringify({
+            query: `query getBillingMetrics($accountId: String!, $filter: AccountWorkersInvocationsAdaptiveFilter_InputObject) {
+            viewer {
+                accounts(filter: {accountTag: $accountId}) {
+                    pagesFunctionsInvocationsAdaptiveGroups(limit: 1000, filter: $filter) {
+                        sum {
+                            requests
+                        }
+                    }
+                    workersInvocationsAdaptive(limit: 10000, filter: $filter) {
+                        sum {
+                            requests
+                        }
+                    }
+                }
+            }
+        }`,
+            variables: {
+                accountId: accountId,
+                filter: { datetime_geq: startDate, datetime_leq: endDate },
+            },
+        }),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Cloudflare API 错误: ${response.status} ${response.statusText}`, errorText);
+        return [all, 0, 0, 0];
+    }
+
+    const res = await response.json();
+
+    if (res.errors && res.errors.length > 0) {
+        return [all, 0, 0, 0];
+    }
+
+    const accounts = res?.data?.viewer?.accounts?.[0];
+    // Add Pages
+    const pagesArray = accounts?.pagesFunctionsInvocationsAdaptiveGroups;
+    const pages = pagesArray?.reduce(
+        (a, b) => a + (b?.sum?.requests || 0),
+        0
+    );
+    // Add Workers
+    const workersArray = accounts?.workersInvocationsAdaptive;
+    const workers = workersArray?.reduce(
+        (a, b) => a + (b?.sum?.requests || 0),
+        0
+    );
+    const total = pages + workers;
+    return [all, pages || 0, workers || 0, total || 0];
 }
