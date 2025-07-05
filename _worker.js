@@ -187,7 +187,7 @@ export default {
                         const usage = await getUsage(env.CF_ID, env.CF_EMAIL, env.CF_APIKEY, env.CF_ALL);
                         pagesSum = usage[1];
                         workersSum = usage[2];
-                        total = 1024 * 100; // 10K
+                        total = 1024 * 100; // 100K
                     }
                     if (userAgent && userAgent.includes('mozilla')) {
                         return new Response(维列斯Config, {
