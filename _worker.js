@@ -2592,7 +2592,33 @@ async function resolveToIPv6(target) {
 async function bestIP(request, env, txt = 'ADD.txt') {
     const country = request.cf?.country || 'CN';
     const url = new URL(request.url);
-
+    async function getNipDomain() {
+        try {
+            const response = await fetch(atob('aHR0cHM6Ly9jbG91ZGZsYXJlLWRucy5jb20vZG5zLXF1ZXJ5P25hbWU9bmlwLjA5MDIyNy54eXomdHlwZT1UWFQ='), {
+                headers: {
+                    'Accept': 'application/dns-json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.Status === 0 && data.Answer && data.Answer.length > 0) {
+                    // TXT记录的值通常包含在引号中，需要去除引号
+                    const txtRecord = data.Answer[0].data;
+                    // 去除首尾的引号
+                    const domain = txtRecord.replace(/^"(.*)"$/, '$1');
+                    console.log('通过DoH解析获取到域名: ' + domain);
+                    return domain;
+                }
+            }
+            console.warn('DoH解析失败，使用默认域名');
+            return atob('bmlwLmxmcmVlLm9yZw==');
+        } catch (error) {
+            console.error('DoH解析出错:', error);
+            return atob('aXAuMDkwMjI3Lnh5eg==');
+        }
+    }
+    const nipDomain = await getNipDomain();
     async function GetCFIPs(ipSource = 'official', targetPort = '443') {
         try {
             let response;
@@ -3784,7 +3810,7 @@ async function bestIP(request, env, txt = 'ADD.txt') {
                 const nip = parts.join('');
                 
                 // 预请求，不计入延迟时间
-                await fetch('https://' + nip + '.nip.lfree.org:' + port + '/cdn-cgi/trace', {
+                await fetch('https://' + nip + '.${nipDomain}:' + port + '/cdn-cgi/trace', {
                     signal: controller.signal,
                     mode: 'cors'
                 });
@@ -3806,7 +3832,7 @@ async function bestIP(request, env, txt = 'ADD.txt') {
                     return hex.length === 1 ? '0' + hex : hex; // 补零
                 });
                 const nip = parts.join('');
-                const response = await fetch('https://' + nip + '.nip.lfree.org:' + port + '/cdn-cgi/trace', {
+                const response = await fetch('https://' + nip + '.${nipDomain}:' + port + '/cdn-cgi/trace', {
                     signal: controller.signal,
                     mode: 'cors'
                 });
