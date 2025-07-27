@@ -3981,7 +3981,7 @@ async function bestIP(request, env, txt = 'ADD.txt') {
                     ipSourceName = '未知';
             }
             
-            progressText.textContent = \`正在加载 \${ipSourceName} IP列表...\`;
+            progressText.textContent = '正在加载 ' + ipSourceName + ' IP列表...';
             
             // 加载IP列表
             originalIPs = await loadIPs(selectedIPSource, selectedPort);
@@ -3998,21 +3998,21 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             }
             
             // 更新IP数量显示
-            ipCount.textContent = \`\${originalIPs.length} 个\`;
+            ipCount.textContent = originalIPs.length + ' 个';
             
             // 显示加载的IP列表（默认显示前16个）
             displayLoadedIPs();
             
             // 开始测试
             testBtn.textContent = '测试中...';
-            progressText.textContent = \`开始测试端口 \${selectedPort}...\`;
+            progressText.textContent = '开始测试端口 ' + selectedPort + '...';
             currentDisplayType = 'testing'; // 切换到测试状态
             
             // 在测试开始时隐藏显示更多按钮
             showMoreSection.style.display = 'none';
             
-            // 使用16个并发线程测试
-            const results = await testIPsWithConcurrency(originalIPs, selectedPort, 16);
+            // 使用更高的并发数（从16增加到32）来加快测试速度
+            const results = await testIPsWithConcurrency(originalIPs, selectedPort, 32);
             
             // 按延迟排序
             testResults = results.sort((a, b) => a.latency - b.latency);
@@ -4029,7 +4029,7 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             testBtn.textContent = '重新测试';
             portSelect.disabled = false;
             ipSourceSelect.disabled = false;
-            progressText.textContent = \`完成 - 有效IP: \${testResults.length}/\${originalIPs.length} (端口: \${selectedPort}, IP库: \${ipSourceName})\`;
+            progressText.textContent = '完成 - 有效IP: ' + testResults.length + '/' + originalIPs.length + ' (端口: ' + selectedPort + ', IP库: ' + ipSourceName + ')';
         }
         
         // 新增：加载IP列表的函数
