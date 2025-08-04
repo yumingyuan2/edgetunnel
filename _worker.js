@@ -411,7 +411,7 @@ async function handleTCPOutBound(remoteSocket, addressType, addressRemote, portR
         if (!useSocks) {
             const nat64Proxyip = `[${await resolveToIPv6(addressRemote)}]`;
             log(`NAT64 代理连接到 ${nat64Proxyip}:443`);
-            tcpSocket = await connectAndWrite(nat64Proxyip, '443');
+            tcpSocket = await connectAndWrite(nat64Proxyip, 443);
         }
         tcpSocket.closed.catch(error => {
             console.log('retry tcpSocket closed error', error);
