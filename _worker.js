@@ -2084,7 +2084,7 @@ function 生成本地订阅(host, UUID, noTLS, newAddressesapi, newAddressescsv,
 async function 整理(内容) {
     // 将制表符、双引号、单引号和换行符都替换为逗号
     // 然后将连续的多个逗号替换为单个逗号
-    var 替换后的内容 = 内容.replace(/[	|"'\r\n]+/g, ',').replace(/,+/g, ',');
+    var 替换后的内容 = 内容.replace(/[	"'\r\n]+/g, ',').replace(/,+/g, ',');
 
     // 删除开头和结尾的逗号（如果有的话）
     if (替换后的内容.charAt(0) == ',') 替换后的内容 = 替换后的内容.slice(1);
