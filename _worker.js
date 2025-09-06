@@ -6248,7 +6248,7 @@ function config_Html(token) {
             const uuid = configData.config.KEY.UUID;
             
             const subscriptions = [
-                { name: '自适应订阅', suffix: '', primary: true },
+                { name: '自适应订阅', suffix: '?sub', primary: true },
                 { name: 'Base64订阅', suffix: '?b64', primary: false },
                 { name: 'Clash订阅', suffix: '?clash', primary: false },
                 { name: 'SingBox订阅', suffix: '?sb', primary: false },
