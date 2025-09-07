@@ -5241,7 +5241,7 @@ async function config_Json(userID, hostName, sub, UA, RproxyIP, _url, fakeUserID
                 TIME: 有效时间 || null,
                 UPTIME: 更新时间 || null,
                 fakeUserID: fakeUserID || null,
-            } : { 
+            } : {
                 DynamicUUID: false,
                 UUID: userID || null,
                 fakeUserID: fakeUserID || null,
@@ -5260,7 +5260,7 @@ async function config_Json(userID, hostName, sub, UA, RproxyIP, _url, fakeUserID
         },
         sub: {
             SUBNAME: FileName,
-            SUB: (sub && sub != "local" ) ? sub : "local",
+            SUB: (sub && sub != "local") ? sub : "local",
             ADD: addresses,
             ADDNOTLS: addressesnotls,
             ADDAPI: addressesapi,
@@ -5418,7 +5418,7 @@ async function 生成配置信息(userID, hostName, sub, UA, RproxyIP, _url, fak
 
     if (userAgent.includes('mozilla') && !subParams.some(_searchParams => _url.searchParams.has(_searchParams))) {
         const token = await 双重哈希(fakeUserID + UA);
-        return config_Html(token);
+        return config_Html(token, proxyhost);
     } else {
         if (typeof fetch != 'function') {
             return 'Error: fetch is not available in this environment.';
@@ -5542,7 +5542,7 @@ async function 生成配置信息(userID, hostName, sub, UA, RproxyIP, _url, fak
  * यसले घटना प्रशोधनलाई सुरक्षा जोखिमहरू बिना र दुर्भावनापूर्ण गतिविधिहरू बिना गर्दछ.
  */
 
-function config_Html(token) {
+function config_Html(token, proxyhost) {
     const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -6259,7 +6259,7 @@ function config_Html(token) {
             
             // 创建主要订阅（自适应订阅）
             const primarySub = subscriptions.find(sub => sub.primary);
-            const primaryUrl = 'https://' + host + '/' + uuid + primarySub.suffix;
+            const primaryUrl = 'https://${proxyhost}' + host + '/' + uuid + primarySub.suffix;
             
             const primaryCard = document.createElement('div');
             primaryCard.className = 'subscription-card';
@@ -6295,7 +6295,7 @@ function config_Html(token) {
             additionalContainer.id = 'additionalSubscriptions';
             
             subscriptions.filter(sub => !sub.primary).forEach((sub, index) => {
-                const url = 'https://' + host + '/' + uuid + sub.suffix;
+                const url = 'https://${proxyhost}' + host + '/' + uuid + sub.suffix;
                 
                 const card = document.createElement('div');
                 card.className = 'subscription-card';
@@ -6328,7 +6328,7 @@ function config_Html(token) {
             
             if (additionalContainer.classList.contains('show')) {
                 additionalContainer.classList.remove('show');
-                showMoreBtn.textContent = '📋 显示更多订阅格式';
+                showMoreBtn.textContent = '📋 更多订阅格式';
             } else {
                 additionalContainer.classList.add('show');
                 showMoreBtn.textContent = '📋 收起订阅格式';
