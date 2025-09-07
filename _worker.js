@@ -182,10 +182,13 @@ export default {
                     path = `/proxyip=${url.searchParams.get('proxyip')}`;
                     RproxyIP = 'false';
                 } else if (url.searchParams.has('socks5')) {
-                    path = `/?socks5=${url.searchParams.get('socks5')}`;
+                    path = url.searchParams.has('globalproxy') ? `/?socks5=${url.searchParams.get('socks5')}&globalproxy` : `/?socks5=${url.searchParams.get('socks5')}`;
                     RproxyIP = 'false';
                 } else if (url.searchParams.has('socks')) {
-                    path = `/?socks5=${url.searchParams.get('socks')}`;
+                    path = url.searchParams.has('globalproxy') ? `/?socks5=${url.searchParams.get('socks')}&globalproxy` : `/?socks5=${url.searchParams.get('socks')}`;
+                    RproxyIP = 'false';
+                } else if (url.searchParams.has('http')) {
+                    path = url.searchParams.has('globalproxy') ? `/?http=${url.searchParams.get('http')}&globalproxy` : `/?http=${url.searchParams.get('http')}`;
                     RproxyIP = 'false';
                 }
 
@@ -256,7 +259,10 @@ export default {
                     else return new Response('不用怀疑！你UUID就是错的！！！', { status: 404 });
                 }
             } else {
-                socks5Address = url.searchParams.get('socks5') || socks5Address;
+                socks5Address = url.searchParams.get('socks5') || url.searchParams.get('http') || socks5Address;
+                enableHttp = url.searchParams.get('http') ? true : enableHttp;
+                go2Socks5s = url.searchParams.has('globalproxy') ? ['all in'] : go2Socks5s;
+
                 if (new RegExp('/socks5=', 'i').test(url.pathname)) socks5Address = url.pathname.split('5=')[1];
                 else if (new RegExp('/socks://', 'i').test(url.pathname) || new RegExp('/socks5://', 'i').test(url.pathname) || new RegExp('/http://', 'i').test(url.pathname)) {
                     enableHttp = url.pathname.includes('http://');
@@ -5542,7 +5548,7 @@ async function 生成配置信息(userID, hostName, sub, UA, RproxyIP, _url, fak
  * यसले घटना प्रशोधनलाई सुरक्षा जोखिमहरू बिना र दुर्भावनापूर्ण गतिविधिहरू बिना गर्दछ.
  */
 
-function config_Html(token, proxyhost) {
+function config_Html(token = "test", proxyhost = "") {
     const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -5690,6 +5696,25 @@ function config_Html(token, proxyhost) {
             display: flex;
             align-items: center;
             gap: 12px;
+            justify-content: space-between;
+        }
+
+        .advanced-settings-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .advanced-settings-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
         }
 
         .section-content {
@@ -5815,6 +5840,225 @@ function config_Html(token, proxyhost) {
         .qr-close-btn:hover {
             background: #e0e0e0;
             transform: scale(1.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10001;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 24px 24px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .modal-close-btn {
+            background: #f0f0f0;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close-btn:hover {
+            background: #e0e0e0;
+            transform: scale(1.1);
+        }
+
+        .modal-body {
+            padding: 0 24px 24px;
+        }
+
+        .setting-item {
+            margin-bottom: 20px;
+        }
+
+        .setting-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-color);
+            margin-bottom: 8px;
+            position: relative;
+            padding-left: 32px;
+        }
+
+        .setting-label input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            left: 0;
+        }
+
+        .checkmark {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 20px;
+            width: 20px;
+            background-color: #f0f0f0;
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .setting-label input:checked ~ .checkmark {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .setting-label input:checked ~ .checkmark:after {
+            content: "";
+            position: absolute;
+            display: block;
+            left: 6px;
+            top: 2px;
+            width: 6px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .setting-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+        }
+
+        .setting-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .setting-input:disabled {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .global-proxy-option {
+            margin-top: 8px;
+            margin-left: 32px;
+        }
+
+        .global-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 0;
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .inline-global {
+            font-size: 0.8rem;
+            padding-left: 24px;
+            color: var(--text-light);
+            margin-bottom: 0;
+            margin-left: auto;
+        }
+
+        .inline-global .checkmark {
+            height: 16px;
+            width: 16px;
+        }
+
+        .inline-global input:checked ~ .checkmark:after {
+            left: 5px;
+            top: 1px;
+            width: 4px;
+            height: 8px;
+        }
+
+        .modal-footer {
+            padding: 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 100px;
+        }
+
+        .modal-btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .modal-btn-secondary {
+            background: #f8f9fa;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-btn-secondary:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
         }
 
         .qr-title {
@@ -6072,8 +6316,8 @@ function config_Html(token, proxyhost) {
             }
         }
     </style>
-</head>
-<body>
+    </head>
+    <body>
     <div class="container">
         <div class="header">
             <div class="social-links">
@@ -6109,6 +6353,7 @@ function config_Html(token, proxyhost) {
                 <div class="section-header">
                     <span>📋</span>
                     <span>订阅链接</span>
+                    <button class="advanced-settings-btn" onclick="openAdvancedSettings()">⚙️ 自定义订阅设置</button>
                 </div>
                 <div class="section-content">
                     <div class="subscription-grid" id="subscriptionLinks"></div>
@@ -6179,10 +6424,6 @@ function config_Html(token, proxyhost) {
                     <div class="details-content" id="tipsContent">
                         <p><strong>1. PassWall/PassWall2:</strong> 订阅编辑的 <strong>用户代理(User-Agent)</strong> 设置为 <strong>PassWall</strong> 即可。</p>
                         <p><strong>2. SSR+ 路由插件:</strong> 推荐使用 <strong>Base64订阅地址</strong> 进行订阅。</p>
-                        <p><strong>3. 切换优选订阅生成器:</strong> URL末尾添加 <code>?sub=sub.google.com</code>。</p>
-                        <p><strong>4. 更换 PROXYIP:</strong> URL末尾添加 <code>?proxyip=proxyip.cmliussss.net:443</code>。</p>
-                        <p><strong>5. 更换 SOCKS5:</strong> URL末尾添加 <code>?socks5=user:password@127.0.0.1:1080</code>。</p>
-                        <p><strong>6. 多参数:</strong> 使用 <code>&</code> 分隔, 例如: <code>?sub=sub.google.com&proxyip=proxyip.cmliussss.net</code>。</p>
                     </div>
                 </details>
             </div>
@@ -6200,6 +6441,71 @@ function config_Html(token, proxyhost) {
             <button class="qr-close-btn" onclick="closeQRModal()">×</button>
             <div class="qr-title" id="qrTitle">二维码</div>
             <div id="qrCode"></div>
+        </div>
+    </div>
+
+    <!-- 高级设置弹窗 -->
+    <div id="advancedModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⚙️ 自定义订阅设置</h3>
+                <button class="modal-close-btn" onclick="closeAdvancedSettings()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-item">
+                    <label class="setting-label">
+                        <input type="checkbox" id="subEnabled" onchange="updateSettings()">
+                        <span class="checkmark"></span>
+                        🚀 优选订阅生成器
+                    </label>
+                    <input type="text" id="subInput" placeholder="sub.google.com" class="setting-input">
+                </div>
+                
+                <div class="setting-item">
+                    <label class="setting-label">
+                        <input type="checkbox" id="proxyipEnabled" onchange="updateProxySettings('proxyip')">
+                        <span class="checkmark"></span>
+                        🌐 PROXYIP
+                    </label>
+                    <input type="text" id="proxyipInput" placeholder="proxyip.cmliussss.net:443" class="setting-input">
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-row">
+                        <label class="setting-label">
+                            <input type="checkbox" id="socks5Enabled" onchange="updateProxySettings('socks5')">
+                            <span class="checkmark"></span>
+                            🔒 SOCKS5
+                        </label>
+                        <label class="setting-label global-label inline-global">
+                            <input type="checkbox" id="socks5GlobalEnabled" onchange="updateGlobalSettings('socks5')">
+                            <span class="checkmark"></span>
+                            全局代理
+                        </label>
+                    </div>
+                    <input type="text" id="socks5Input" placeholder="user:password@127.0.0.1:1080" class="setting-input">
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-row">
+                        <label class="setting-label">
+                            <input type="checkbox" id="httpEnabled" onchange="updateProxySettings('http')">
+                            <span class="checkmark"></span>
+                            🌍 HTTP
+                        </label>
+                        <label class="setting-label global-label inline-global">
+                            <input type="checkbox" id="httpGlobalEnabled" onchange="updateGlobalSettings('http')">
+                            <span class="checkmark"></span>
+                            全局代理
+                        </label>
+                    </div>
+                    <input type="text" id="httpInput" placeholder="34.87.109.175:9443" class="setting-input">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeAdvancedSettings()">返回</button>
+                <button class="modal-btn modal-btn-primary" onclick="saveAdvancedSettings()">保存</button>
+            </div>
         </div>
     </div>
 
@@ -6259,7 +6565,7 @@ function config_Html(token, proxyhost) {
             
             // 创建主要订阅（自适应订阅）
             const primarySub = subscriptions.find(sub => sub.primary);
-            const primaryUrl = 'https://${proxyhost}' + host + '/' + uuid + primarySub.suffix;
+            const primaryUrl = buildSubscriptionUrl(host, uuid, primarySub.suffix);
             
             const primaryCard = document.createElement('div');
             primaryCard.className = 'subscription-card';
@@ -6285,7 +6591,7 @@ function config_Html(token, proxyhost) {
             // 创建"显示更多"按钮
             const showMoreBtn = document.createElement('button');
             showMoreBtn.className = 'show-more-btn';
-            showMoreBtn.textContent = '📋 显示更多订阅格式';
+            showMoreBtn.textContent = '📋 更多订阅格式';
             showMoreBtn.addEventListener('click', toggleAdditionalSubscriptions);
             container.appendChild(showMoreBtn);
             
@@ -6295,7 +6601,7 @@ function config_Html(token, proxyhost) {
             additionalContainer.id = 'additionalSubscriptions';
             
             subscriptions.filter(sub => !sub.primary).forEach((sub, index) => {
-                const url = 'https://${proxyhost}' + host + '/' + uuid + sub.suffix;
+                const url = buildSubscriptionUrl(host, uuid, sub.suffix);
                 
                 const card = document.createElement('div');
                 card.className = 'subscription-card';
@@ -6320,6 +6626,47 @@ function config_Html(token, proxyhost) {
             });
             
             container.appendChild(additionalContainer);
+        }
+
+        function buildSubscriptionUrl(host, uuid, suffix) {
+            const baseUrl = 'https://${proxyhost}' + host + '/' + uuid + suffix;
+            
+            // 获取保存的设置
+            const settings = getAdvancedSettings();
+            const params = [];
+            
+            // 处理订阅生成器参数
+            if (settings.subEnabled && settings.subValue) {
+                if (suffix === '?sub') {
+                    params.push('sub=' + encodeURIComponent(settings.subValue));
+                } else {
+                    params.push('sub=' + encodeURIComponent(settings.subValue));
+                }
+            }
+            
+            // 处理代理参数（互斥）
+            if (settings.proxyipEnabled && settings.proxyipValue) {
+                params.push('proxyip=' + encodeURIComponent(settings.proxyipValue));
+            } else if (settings.socks5Enabled && settings.socks5Value) {
+                params.push('socks5=' + encodeURIComponent(settings.socks5Value));
+                // 添加全局代理参数
+                if (settings.socks5GlobalEnabled) {
+                    params.push('globalproxy');
+                }
+            } else if (settings.httpEnabled && settings.httpValue) {
+                params.push('http=' + encodeURIComponent(settings.httpValue));
+                // 添加全局代理参数
+                if (settings.httpGlobalEnabled) {
+                    params.push('globalproxy');
+                }
+            }
+            
+            if (params.length > 0) {
+                const separator = suffix.includes('?') ? '&' : '?';
+                return baseUrl + separator + params.join('&');
+            }
+            
+            return baseUrl;
         }
 
         function toggleAdditionalSubscriptions() {
@@ -6643,20 +6990,196 @@ function config_Html(token, proxyhost) {
             });
         }
 
-        function showToast(message) {
+        function showToast(message, duration = 3000) {
             const toast = document.createElement('div');
-            toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.7); color: white; padding: 12px 24px; border-radius: 8px; z-index: 10000; font-weight: 500; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); animation: fadeInOut 3s ease;';
+            
+            // 检查是否是重要提示（包含特定关键词）
+            const isImportant = message.includes('重新复制') || message.includes('自定义设置');
+            
+            if (isImportant) {
+                // 重要提示样式 - 更醒目
+                toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #4a90e2, #357abd); color: white; padding: 16px 32px; border-radius: 12px; z-index: 10000; font-weight: 600; font-size: 1.1rem; box-shadow: 0 8px 24px rgba(74, 144, 226, 0.4); border: 2px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); animation: importantToast ' + duration + 'ms ease; max-width: 90%; text-align: center; line-height: 1.4;';
+            } else {
+                // 普通提示样式
+                toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.7); color: white; padding: 12px 24px; border-radius: 8px; z-index: 10000; font-weight: 500; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); animation: fadeInOut ' + duration + 'ms ease;';
+            }
+            
             toast.textContent = message;
             document.body.appendChild(toast);
             
             setTimeout(() => {
                 toast.remove();
-            }, 3000);
+            }, duration);
         }
 
         const style = document.createElement('style');
-        style.textContent = '@keyframes fadeInOut { 0%, 100% { opacity: 0; transform: translate(-50%, 10px); } 10%, 90% { opacity: 1; transform: translate(-50%, 0); } }';
+        style.textContent = '@keyframes fadeInOut { 0%, 100% { opacity: 0; transform: translate(-50%, 10px); } 10%, 90% { opacity: 1; transform: translate(-50%, 0); } } @keyframes importantToast { 0% { opacity: 0; transform: translate(-50%, 20px) scale(0.9); } 10% { opacity: 1; transform: translate(-50%, 0) scale(1.05); } 15% { transform: translate(-50%, 0) scale(1); } 85% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -10px) scale(0.95); } }';
         document.head.appendChild(style);
+
+        // 高级设置相关函数
+        function openAdvancedSettings() {
+            const modal = document.getElementById('advancedModal');
+            loadAdvancedSettings();
+            modal.classList.add('show');
+        }
+
+        function closeAdvancedSettings() {
+            const modal = document.getElementById('advancedModal');
+            modal.classList.remove('show');
+        }
+
+        function loadAdvancedSettings() {
+            const settings = getAdvancedSettings();
+            
+            document.getElementById('subEnabled').checked = settings.subEnabled;
+            document.getElementById('subInput').value = settings.subValue;
+            document.getElementById('subInput').disabled = !settings.subEnabled;
+            
+            document.getElementById('proxyipEnabled').checked = settings.proxyipEnabled;
+            document.getElementById('proxyipInput').value = settings.proxyipValue;
+            document.getElementById('proxyipInput').disabled = !settings.proxyipEnabled;
+            
+            document.getElementById('socks5Enabled').checked = settings.socks5Enabled;
+            document.getElementById('socks5Input').value = settings.socks5Value;
+            document.getElementById('socks5Input').disabled = !settings.socks5Enabled;
+            document.getElementById('socks5GlobalEnabled').checked = settings.socks5GlobalEnabled;
+            document.getElementById('socks5GlobalEnabled').disabled = !settings.socks5Enabled;
+            
+            document.getElementById('httpEnabled').checked = settings.httpEnabled;
+            document.getElementById('httpInput').value = settings.httpValue;
+            document.getElementById('httpInput').disabled = !settings.httpEnabled;
+            document.getElementById('httpGlobalEnabled').checked = settings.httpGlobalEnabled;
+            document.getElementById('httpGlobalEnabled').disabled = !settings.httpEnabled;
+        }
+
+        function getAdvancedSettings() {
+            const settings = localStorage.getItem('advancedSubscriptionSettings');
+            if (settings) {
+                return JSON.parse(settings);
+            }
+            return {
+                subEnabled: false,
+                subValue: '',
+                proxyipEnabled: false,
+                proxyipValue: '',
+                socks5Enabled: false,
+                socks5Value: '',
+                socks5GlobalEnabled: false,
+                httpEnabled: false,
+                httpValue: '',
+                httpGlobalEnabled: false
+            };
+        }
+
+        // 格式化SOCKS5输入
+        function formatSocks5Input(input) {
+            if (!input) return input;
+            
+            // 移除协议前缀和结尾的斜杠
+            let formatted = input.trim()
+                .replace(/^socks5?:\\/\\//, '')  // 移除 socks5:// 或 socks://
+                .replace(/\\/$/, '')            // 移除结尾的 /
+                .replace(/#.*$/, '');           // 移除 # 及其后面的所有内容
+            
+            return formatted;
+        }
+
+        // 格式化HTTP输入
+        function formatHttpInput(input) {
+            if (!input) return input;
+            
+            // 移除协议前缀和结尾的斜杠
+            let formatted = input.trim()
+                .replace(/^https?:\\/\\//, '')   // 移除 http:// 或 https://
+                .replace(/\\/$/, '')            // 移除结尾的 /
+                .replace(/#.*$/, '');           // 移除 # 及其后面的所有内容
+            
+            return formatted;
+        }
+
+        function saveAdvancedSettings() {
+            // 格式化输入值
+            const socks5Value = formatSocks5Input(document.getElementById('socks5Input').value);
+            const httpValue = formatHttpInput(document.getElementById('httpInput').value);
+            
+            // 更新输入框显示格式化后的值
+            document.getElementById('socks5Input').value = socks5Value;
+            document.getElementById('httpInput').value = httpValue;
+            
+            const settings = {
+                subEnabled: document.getElementById('subEnabled').checked,
+                subValue: document.getElementById('subInput').value,
+                proxyipEnabled: document.getElementById('proxyipEnabled').checked,
+                proxyipValue: document.getElementById('proxyipInput').value,
+                socks5Enabled: document.getElementById('socks5Enabled').checked,
+                socks5Value: socks5Value,
+                socks5GlobalEnabled: document.getElementById('socks5GlobalEnabled').checked,
+                httpEnabled: document.getElementById('httpEnabled').checked,
+                httpValue: httpValue,
+                httpGlobalEnabled: document.getElementById('httpGlobalEnabled').checked
+            };
+            
+            localStorage.setItem('advancedSubscriptionSettings', JSON.stringify(settings));
+            closeAdvancedSettings();
+            
+            // 重新渲染订阅链接
+            renderSubscriptionLinks();
+            showToast('🎉 设置已保存！请重新复制上方更新后的订阅链接，才能使自定义设置生效哦~', 5000);
+        }
+
+        function updateSettings() {
+            const enabled = document.getElementById('subEnabled').checked;
+            document.getElementById('subInput').disabled = !enabled;
+        }
+
+        function updateProxySettings(type) {
+            const enabled = document.getElementById(type + 'Enabled').checked;
+            
+            if (enabled) {
+                // 取消其他代理选项的勾选
+                const proxyTypes = ['proxyip', 'socks5', 'http'];
+                proxyTypes.forEach(proxyType => {
+                    if (proxyType !== type) {
+                        document.getElementById(proxyType + 'Enabled').checked = false;
+                        document.getElementById(proxyType + 'Input').disabled = true;
+                        // 禁用其他代理的全局选项
+                        if (proxyType === 'socks5' || proxyType === 'http') {
+                            const globalCheckbox = document.getElementById(proxyType + 'GlobalEnabled');
+                            if (globalCheckbox) {
+                                globalCheckbox.checked = false;
+                                globalCheckbox.disabled = true;
+                            }
+                        }
+                    }
+                });
+            }
+            
+            document.getElementById(type + 'Input').disabled = !enabled;
+            
+            // 控制全局代理选项的启用/禁用
+            if (type === 'socks5' || type === 'http') {
+                const globalCheckbox = document.getElementById(type + 'GlobalEnabled');
+                if (globalCheckbox) {
+                    globalCheckbox.disabled = !enabled;
+                    if (!enabled) {
+                        globalCheckbox.checked = false;
+                    }
+                }
+            }
+        }
+
+        function updateGlobalSettings(type) {
+            // 这个函数目前只是为了响应全局代理复选框的变化
+            // 实际逻辑在保存时处理
+        }
+
+        // 点击弹窗外部区域关闭弹窗
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('qrModal');
+            if (event.target === modal) {
+                closeQRModal();
+            }
+        });
     </script>
 </body>
 </html>`;
