@@ -6316,8 +6316,8 @@ function config_Html(token = "test", proxyhost = "") {
             }
         }
     </style>
-    </head>
-    <body>
+</head>
+<body>
     <div class="container">
         <div class="header">
             <div class="social-links">
@@ -6629,7 +6629,7 @@ function config_Html(token = "test", proxyhost = "") {
         }
 
         function buildSubscriptionUrl(host, uuid, suffix) {
-            const baseUrl = 'https://${proxyhost}' + host + '/' + uuid + suffix;
+            let baseUrl = 'https://${proxyhost}' + host + '/' + uuid + suffix;
             
             // 获取保存的设置
             const settings = getAdvancedSettings();
@@ -6638,8 +6638,10 @@ function config_Html(token = "test", proxyhost = "") {
             // 处理订阅生成器参数
             if (settings.subEnabled && settings.subValue) {
                 if (suffix === '?sub') {
-                    params.push('sub=' + encodeURIComponent(settings.subValue));
+                    // 对于 ?sub 后缀，直接替换为 ?sub=value
+                    baseUrl = 'https://${proxyhost}' + host + '/' + uuid + '?sub=' + encodeURIComponent(settings.subValue);
                 } else {
+                    // 对于其他后缀，添加 sub 参数
                     params.push('sub=' + encodeURIComponent(settings.subValue));
                 }
             }
@@ -6662,7 +6664,7 @@ function config_Html(token = "test", proxyhost = "") {
             }
             
             if (params.length > 0) {
-                const separator = suffix.includes('?') ? '&' : '?';
+                const separator = baseUrl.includes('?') ? '&' : '?';
                 return baseUrl + separator + params.join('&');
             }
             
