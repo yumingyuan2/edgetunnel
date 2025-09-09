@@ -5242,14 +5242,14 @@ async function config_Json(userID, hostName, sub, UA, RproxyIP, _url, fakeUserID
             KEY: (uuid != userID) ? {
                 DynamicUUID: true,
                 TOKEN: uuid || null,
-                UUID: userID || null,
+                UUID: userID.toLowerCase() || null,
                 UUIDLow: userIDLow || null,
                 TIME: 有效时间 || null,
                 UPTIME: 更新时间 || null,
                 fakeUserID: fakeUserID || null,
             } : {
                 DynamicUUID: false,
-                UUID: userID || null,
+                UUID: userID.toLowerCase() || null,
                 fakeUserID: fakeUserID || null,
             },
             SCV: SCV
