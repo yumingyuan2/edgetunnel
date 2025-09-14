@@ -5192,7 +5192,7 @@ async function nginx() {
  * and sequences in a safe and efficient manner. It handles randomization without
  * any security risks or malicious activities.
  */
-
+const 啥啥啥_写的这是啥啊 = atob('ZG14bGMzTT0=');
 async function config_Json(userID, hostName, sub, UA, 请求CF反代IP, _url, fakeUserID, fakeHostName, env) {
     const uuid = (_url.pathname.startsWith(`/${动态UUID}/`)) ? 动态UUID : userID;
     const newSocks5s = socks5s.map(socks5Address => {
@@ -5214,7 +5214,6 @@ async function config_Json(userID, hostName, sub, UA, 请求CF反代IP, _url, fa
         端口 = 80;
         传输层安全 = ['', false];
     }
-    const 啥啥啥_写的这是啥啊 = atob('ZG14bGMzTT0=');
 
     const config = {
         timestamp: new Date().toISOString(),
@@ -5239,7 +5238,7 @@ async function config_Json(userID, hostName, sub, UA, 请求CF反代IP, _url, fa
             RequestProxyIP: 请求CF反代IP,
             GO2CF: CF访问方法,
             List: {
-                PROXYIP: proxyIPs.filter(ip => ip !== ''),
+                PROXY_IP: proxyIPs.filter(ip => ip !== ''),
                 SOCKS5: enableHttp ? [] : newSocks5s,
                 HTTP: enableHttp ? newSocks5s : []
             },
@@ -6789,8 +6788,8 @@ function config_Html(token = "test", proxyhost = "") {
 
                 if (cf2cdn === 'proxyip') {
                     items.push({ label: 'CloudflareCDN访问模式', value: 'ProxyIP' });
-                    if (proxy.List.PROXYIP && proxy.List.PROXYIP.length > 0) {
-                        items.push({ label: 'ProxyIP列表', value: proxy.List.PROXYIP.join('<br>') });
+                    if (proxy.List.PROXY_IP && proxy.List.PROXY_IP.length > 0) {
+                        items.push({ label: 'ProxyIP列表', value: proxy.List.PROXY_IP.join('<br>') });
                     }
                 } else if (cf2cdn === 'socks5') {
                     if (isGlobal) {
