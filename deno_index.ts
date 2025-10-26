@@ -58,6 +58,36 @@ async function handleRequest(request: Request): Promise<Response> {
     responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     responseHeaders.set('Access-Control-Allow-Headers', '*');
 
+    // 检查内容类型，对文本类型文件替换其中的域名
+    const contentType = response.headers.get('content-type') || '';
+    const textTypes = [
+      'text/html',
+      'application/javascript',
+      'application/json',
+      'text/css',
+      'text/plain',
+      'application/xml',
+      'text/xml'
+    ];
+    
+    // 检查是否为需要替换域名的文本类型
+    const shouldReplace = textTypes.some(type => contentType.includes(type));
+    
+    if (shouldReplace) {
+      const text = await response.text();
+      // 替换所有funnerwsmsinarainyglobal.pages.dev为当前域名
+      const modifiedText = text.replace(
+        /funnerwsmsinarainyglobal\.pages\.dev/g, 
+        url.host
+      );
+      
+      return new Response(modifiedText, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: responseHeaders
+      });
+    }
+
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
