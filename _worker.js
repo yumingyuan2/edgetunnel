@@ -1039,7 +1039,13 @@ async function sendMessage(type, ip, add_data = "") {
         const response = await fetch(`http://ip-api.com/json/${ip}?lang=zh-CN`);
         if (response.ok) {
             const ipInfo = await response.json();
-            msg = `${type}\nIP: ${ip}\n国家: ${ipInfo.country}\n<tg-spoiler>城市: ${ipInfo.city}\n组织: ${ipInfo.org}\nASN: ${ipInfo.as}\n${add_data}`;
+            msg = `${type}
+IP: ${ip}
+国家: ${ipInfo.country}
+<tg-spoiler>城市: ${ipInfo.city}
+组织: ${ipInfo.org}
+ASN: ${ipInfo.as}
+${add_data}`;
         } else {
             msg = `${type}\nIP: ${ip}\n<tg-spoiler>${add_data}`;
         }
@@ -2267,6 +2273,103 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             background-color: #2196F3;
             color: white;
         }
+        .auto-select-section {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #fff3e0;
+            border: 2px solid #ff9800;
+            border-radius: 12px;
+        }
+        .auto-select-section h3 {
+            margin: 0 0 15px 0;
+            color: #f57c00;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .auto-select-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .auto-select-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .auto-select-label {
+            font-weight: 500;
+            color: #e65100;
+            min-width: 100px;
+        }
+        .auto-select-options {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+        .auto-option-btn {
+            padding: 6px 12px;
+            background-color: #fff;
+            border: 2px solid #ff9800;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            color: #e65100;
+            font-weight: 500;
+        }
+        .auto-option-btn:hover {
+            background-color: #ffe0b2;
+        }
+        .auto-option-btn.selected {
+            background-color: #ff9800;
+            color: white;
+        }
+        .auto-select-btn {
+            padding: 15px 32px;
+            background-color: #ff6f00;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 700;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        .auto-select-btn:hover {
+            background-color: #e65100;
+            transform: translateY(-2px);
+        }
+        .auto-select-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .auto-progress {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 1px solid #ff9800;
+            display: none;
+        }
+        .auto-progress.show {
+            display: block;
+        }
+        .auto-progress-text {
+            font-weight: 500;
+            color: #e65100;
+            margin-bottom: 8px;
+        }
+        .auto-progress-detail {
+            font-size: 0.9em;
+            color: #666;
+            line-height: 1.6;
+        }
     </style>
     </head>
     <body>
@@ -2309,6 +2412,41 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             <li><strong>更换自定义域名：</strong>如果您使用的还是免费域名，那么您更应该尝试一下更换自定义域</li>
         </ul>
         <p>💡 <strong>小贴士：</strong>不同地区和网络环境对各端口的支持情况可能不同，多尝试几个端口组合通常能找到适合的IP。</p>
+    </div>
+
+    <!-- 自动优选功能区域 -->
+    <div class="auto-select-section">
+        <h3>🤖 自动优选功能</h3>
+        <div class="auto-select-controls">
+            <div class="auto-select-row">
+                <span class="auto-select-label">选择IP库：</span>
+                <div class="auto-select-options">
+                    <button class="auto-option-btn" data-source="official" onclick="toggleAutoOption('source', 'official')">CF官方</button>
+                    <button class="auto-option-btn" data-source="cm" onclick="toggleAutoOption('source', 'cm')">CM整理</button>
+                    <button class="auto-option-btn" data-source="as13335" onclick="toggleAutoOption('source', 'as13335')">AS13335</button>
+                    <button class="auto-option-btn" data-source="as209242" onclick="toggleAutoOption('source', 'as209242')">AS209242</button>
+                    <button class="auto-option-btn" data-source="as24429" onclick="toggleAutoOption('source', 'as24429')">AS24429</button>
+                    <button class="auto-option-btn" data-source="as199524" onclick="toggleAutoOption('source', 'as199524')">AS199524</button>
+                    <button class="auto-option-btn" data-source="proxyip" onclick="toggleAutoOption('source', 'proxyip')">反代IP</button>
+                </div>
+            </div>
+            <div class="auto-select-row">
+                <span class="auto-select-label">选择端口：</span>
+                <div class="auto-select-options">
+                    <button class="auto-option-btn" data-port="443" onclick="toggleAutoOption('port', '443')">443</button>
+                    <button class="auto-option-btn" data-port="2053" onclick="toggleAutoOption('port', '2053')">2053</button>
+                    <button class="auto-option-btn" data-port="2083" onclick="toggleAutoOption('port', '2083')">2083</button>
+                    <button class="auto-option-btn" data-port="2087" onclick="toggleAutoOption('port', '2087')">2087</button>
+                    <button class="auto-option-btn" data-port="2096" onclick="toggleAutoOption('port', '2096')">2096</button>
+                    <button class="auto-option-btn" data-port="8443" onclick="toggleAutoOption('port', '8443')">8443</button>
+                </div>
+            </div>
+            <button class="auto-select-btn" id="auto-select-btn" onclick="startAutoSelect()">🚀 开始自动优选</button>
+            <div class="auto-progress" id="auto-progress">
+                <div class="auto-progress-text" id="auto-progress-text">准备开始...</div>
+                <div class="auto-progress-detail" id="auto-progress-detail"></div>
+            </div>
+        </div>
     </div>
 
     <div class="test-controls">
@@ -2367,11 +2505,15 @@ async function bestIP(request, env, txt = 'ADD.txt') {
         let showingAll = false; // 新增：标记是否显示全部内容
         let currentDisplayType = 'loading'; // 新增：当前显示类型 'loading' | 'results'
         let cloudflareLocations = {}; // 新增：存储Cloudflare位置信息
+        let isAutoSelecting = false; // 自动优选运行状态
+        let autoSelectAborted = false; // 自动优选中止标志
         
         // 新增：本地存储管理
         const StorageKeys = {
             PORT: 'cf-ip-test-port',
-            IP_SOURCE: 'cf-ip-test-source'
+            IP_SOURCE: 'cf-ip-test-source',
+            AUTO_SOURCES: 'cf-auto-select-sources',
+            AUTO_PORTS: 'cf-auto-select-ports'
         };
         
         // 新增：加载Cloudflare位置信息
@@ -2434,7 +2576,221 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             await loadCloudflareLocations();
             // 然后初始化页面设置
             initializeSettings();
+            // 初始化自动优选设置
+            initializeAutoSelectSettings();
         });
+        
+        // 初始化自动优选设置
+        function initializeAutoSelectSettings() {
+            // 从本地存储读取上次的选择
+            const savedSources = localStorage.getItem(StorageKeys.AUTO_SOURCES);
+            const savedPorts = localStorage.getItem(StorageKeys.AUTO_PORTS);
+            
+            if (savedSources) {
+                const sources = JSON.parse(savedSources);
+                sources.forEach(source => {
+                    const btn = document.querySelector('[data-source="' + source + '"]');
+                    if (btn) btn.classList.add('selected');
+                });
+            }
+            
+            if (savedPorts) {
+                const ports = JSON.parse(savedPorts);
+                ports.forEach(port => {
+                    const btn = document.querySelector('[data-port="' + port + '"]');
+                    if (btn) btn.classList.add('selected');
+                });
+            }
+        }
+        
+        // 切换自动优选选项
+        function toggleAutoOption(type, value) {
+            const btn = type === 'source' 
+                ? document.querySelector('[data-source="' + value + '"]')
+                : document.querySelector('[data-port="' + value + '"]');
+            
+            if (!btn) return;
+            
+            btn.classList.toggle('selected');
+            
+            // 保存到本地存储
+            const storageKey = type === 'source' ? StorageKeys.AUTO_SOURCES : StorageKeys.AUTO_PORTS;
+            const selector = type === 'source' ? '[data-source]' : '[data-port]';
+            const attribute = type === 'source' ? 'data-source' : 'data-port';
+            
+            const selectedBtns = document.querySelectorAll(selector + '.selected');
+            const selectedValues = Array.from(selectedBtns).map(b => b.getAttribute(attribute));
+            localStorage.setItem(storageKey, JSON.stringify(selectedValues));
+        }
+        
+        // 获取选中的自动优选配置
+        function getAutoSelectConfig() {
+            const sourceBtns = document.querySelectorAll('[data-source].selected');
+            const portBtns = document.querySelectorAll('[data-port].selected');
+            
+            const sources = Array.from(sourceBtns).map(btn => btn.getAttribute('data-source'));
+            const ports = Array.from(portBtns).map(btn => btn.getAttribute('data-port'));
+            
+            return { sources, ports };
+        }
+        
+        // 开始自动优选
+        async function startAutoSelect() {
+            if (isAutoSelecting) {
+                // 如果正在运行，则中止
+                autoSelectAborted = true;
+                showMessage('⚠️ 正在中止自动优选...', 'error');
+                return;
+            }
+            
+            const config = getAutoSelectConfig();
+            
+            if (config.sources.length === 0 || config.ports.length === 0) {
+                showMessage('❌ 请至少选择一个IP库和一个端口', 'error');
+                return;
+            }
+            
+            isAutoSelecting = true;
+            autoSelectAborted = false;
+            
+            const autoSelectBtn = document.getElementById('auto-select-btn');
+            const autoProgress = document.getElementById('auto-progress');
+            const autoProgressText = document.getElementById('auto-progress-text');
+            const autoProgressDetail = document.getElementById('auto-progress-detail');
+            
+            autoSelectBtn.textContent = '⏸️ 停止自动优选';
+            autoProgress.classList.add('show');
+            
+            // 禁用其他按钮
+            disableAllButtons();
+            
+            const totalTasks = config.sources.length * config.ports.length;
+            let completedTasks = 0;
+            let totalSavedIPs = 0;
+            
+            autoProgressText.textContent = '自动优选进行中... (0/' + totalTasks + ')';
+            autoProgressDetail.innerHTML = '已完成: 0 个任务<br>已追加: 0 个优选IP';
+            
+            try {
+                for (const source of config.sources) {
+                    if (autoSelectAborted) break;
+                    
+                    for (const port of config.ports) {
+                        if (autoSelectAborted) break;
+                        
+                        autoProgressText.textContent = '正在测试: ' + getSourceName(source) + ' - 端口 ' + port + ' (' + (completedTasks + 1) + '/' + totalTasks + ')';
+                        
+                        // 设置当前测试的IP库和端口
+                        document.getElementById('ip-source-select').value = source;
+                        document.getElementById('port-select').value = port;
+                        localStorage.setItem(StorageKeys.PORT, port);
+                        localStorage.setItem(StorageKeys.IP_SOURCE, source);
+                        
+                        // 执行测试
+                        await performSingleTest(source, port);
+                        
+                        // 如果有结果，自动追加
+                        if (testResults.length > 0) {
+                            const saveCount = Math.min(testResults.length, 16);
+                            const ips = testResults.slice(0, saveCount).map(result => result.display);
+                            
+                            try {
+                                const response = await fetch('?action=append', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ ips })
+                                });
+                                
+                                const data = await response.json();
+                                if (data.success) {
+                                    totalSavedIPs += saveCount;
+                                    console.log('✅ ' + getSourceName(source) + ' - ' + port + ': 追加了 ' + saveCount + ' 个IP');
+                                }
+                            } catch (error) {
+                                console.error('追加IP失败:', error);
+                            }
+                        }
+                        
+                        completedTasks++;
+                        autoProgressDetail.innerHTML = '已完成: ' + completedTasks + ' 个任务<br>已追加: ' + totalSavedIPs + ' 个优选IP';
+                        
+                        // 短暂延迟，避免请求过快
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
+                
+                if (autoSelectAborted) {
+                    autoProgressText.textContent = '⚠️ 自动优选已中止 (完成 ' + completedTasks + '/' + totalTasks + ' 个任务)';
+                    showMessage('自动优选已中止，已完成 ' + completedTasks + ' 个任务，追加了 ' + totalSavedIPs + ' 个优选IP', 'error');
+                } else {
+                    autoProgressText.textContent = '✅ 自动优选完成！(' + completedTasks + '/' + totalTasks + ' 个任务)';
+                    showMessage('🎉 自动优选完成！共测试了 ' + completedTasks + ' 个组合，追加了 ' + totalSavedIPs + ' 个优选IP', 'success');
+                }
+                
+            } catch (error) {
+                console.error('自动优选出错:', error);
+                autoProgressText.textContent = '❌ 自动优选出错';
+                showMessage('自动优选过程中出错: ' + error.message, 'error');
+            } finally {
+                isAutoSelecting = false;
+                autoSelectAborted = false;
+                autoSelectBtn.textContent = '🚀 开始自动优选';
+                enableButtons();
+            }
+        }
+        
+        // 执行单次测试（不更新UI按钮状态）
+        async function performSingleTest(ipSource, port) {
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            const ipList = document.getElementById('ip-list');
+            const resultCount = document.getElementById('result-count');
+            const ipCount = document.getElementById('ip-count');
+            
+            testResults = [];
+            displayedResults = [];
+            showingAll = false;
+            currentDisplayType = 'loading';
+            
+            progressBar.style.width = '0%';
+            
+            const ipSourceName = getSourceName(ipSource);
+            progressText.textContent = '正在加载 ' + ipSourceName + ' IP列表...';
+            ipList.innerHTML = '<div class="ip-item">正在加载IP列表，请稍候...</div>';
+            
+            // 加载IP列表
+            originalIPs = await loadIPs(ipSource, port);
+            
+            if (originalIPs.length === 0) {
+                console.log(ipSourceName + ' - ' + port + ': 加载IP列表失败');
+                return;
+            }
+            
+            ipCount.textContent = originalIPs.length + ' 个';
+            progressText.textContent = '开始测试端口 ' + port + '...';
+            currentDisplayType = 'testing';
+            
+            // 执行测试
+            const results = await testIPsWithConcurrency(originalIPs, port, 32);
+            testResults = results.sort((a, b) => a.latency - b.latency);
+            
+            currentDisplayType = 'results';
+            progressText.textContent = '完成 - 有效IP: ' + testResults.length + '/' + originalIPs.length + ' (端口: ' + port + ', IP库: ' + ipSourceName + ')';
+        }
+        
+        // 获取IP库名称
+        function getSourceName(source) {
+            const names = {
+                'official': 'CF官方',
+                'cm': 'CM整理',
+                'as13335': 'CF全段',
+                'as209242': 'CF非官方',
+                'as24429': 'Alibaba',
+                'as199524': 'G-Core',
+                'proxyip': '反代IP'
+            };
+            return names[source] || '未知';
+        }
         
         // 新增：切换显示更多/更少
         function toggleShowMore() {
