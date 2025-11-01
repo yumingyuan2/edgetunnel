@@ -2321,12 +2321,16 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             color: #e65100;
             font-weight: 500;
         }
-        .auto-option-btn:hover {
+        .auto-option-btn:hover:not(:disabled) {
             background-color: #ffe0b2;
         }
         .auto-option-btn.selected {
             background-color: #ff9800;
             color: white;
+        }
+        .auto-option-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         .auto-select-btn {
             padding: 15px 32px;
@@ -2661,9 +2665,6 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             autoSelectBtn.textContent = '⏸️ 停止自动优选';
             autoProgress.classList.add('show');
             
-            // 禁用其他按钮
-            disableAllButtons();
-            
             const totalTasks = config.sources.length * config.ports.length;
             let completedTasks = 0;
             let totalSavedIPs = 0;
@@ -2680,16 +2681,14 @@ async function bestIP(request, env, txt = 'ADD.txt') {
                         
                         autoProgressText.textContent = '正在测试: ' + getSourceName(source) + ' - 端口 ' + port + ' (' + (completedTasks + 1) + '/' + totalTasks + ')';
                         
-                        // 设置当前测试的IP库和端口
+                        // 设置当前测试的IP库和端口（模拟用户选择）
                         document.getElementById('ip-source-select').value = source;
                         document.getElementById('port-select').value = port;
-                        localStorage.setItem(StorageKeys.PORT, port);
-                        localStorage.setItem(StorageKeys.IP_SOURCE, source);
                         
-                        // 执行测试
-                        await performSingleTest(source, port);
+                        // 直接调用常规优选测试函数
+                        await startTest();
                         
-                        // 如果有结果，自动追加
+                        // 等待测试完成后，如果有结果，自动追加
                         if (testResults.length > 0) {
                             const saveCount = Math.min(testResults.length, 16);
                             const ips = testResults.slice(0, saveCount).map(result => result.display);
@@ -2705,17 +2704,23 @@ async function bestIP(request, env, txt = 'ADD.txt') {
                                 if (data.success) {
                                     totalSavedIPs += saveCount;
                                     console.log('✅ ' + getSourceName(source) + ' - ' + port + ': 追加了 ' + saveCount + ' 个IP');
+                                    autoProgressDetail.innerHTML = '已完成: ' + (completedTasks + 1) + ' 个任务<br>已追加: ' + totalSavedIPs + ' 个优选IP<br><span style="color: #4CAF50;">✅ 本次追加: ' + saveCount + ' 个</span>';
                                 }
                             } catch (error) {
                                 console.error('追加IP失败:', error);
+                                autoProgressDetail.innerHTML = '已完成: ' + (completedTasks + 1) + ' 个任务<br>已追加: ' + totalSavedIPs + ' 个优选IP<br><span style="color: #f44336;">❌ 本次追加失败</span>';
                             }
+                        } else {
+                            autoProgressDetail.innerHTML = '已完成: ' + (completedTasks + 1) + ' 个任务<br>已追加: ' + totalSavedIPs + ' 个优选IP<br><span style="color: #ff9800;">⚠️ 本次无有效IP</span>';
                         }
                         
                         completedTasks++;
-                        autoProgressDetail.innerHTML = '已完成: ' + completedTasks + ' 个任务<br>已追加: ' + totalSavedIPs + ' 个优选IP';
                         
-                        // 短暂延迟，避免请求过快
-                        await new Promise(resolve => setTimeout(resolve, 500));
+                        // 短暂延迟后更新进度详情（给用户看到追加状态）
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        
+                        // 更新总进度
+                        autoProgressDetail.innerHTML = '已完成: ' + completedTasks + ' 个任务<br>已追加: ' + totalSavedIPs + ' 个优选IP';
                     }
                 }
                 
@@ -2735,47 +2740,7 @@ async function bestIP(request, env, txt = 'ADD.txt') {
                 isAutoSelecting = false;
                 autoSelectAborted = false;
                 autoSelectBtn.textContent = '🚀 开始自动优选';
-                enableButtons();
             }
-        }
-        
-        // 执行单次测试（不更新UI按钮状态）
-        async function performSingleTest(ipSource, port) {
-            const progressBar = document.getElementById('progress-bar');
-            const progressText = document.getElementById('progress-text');
-            const ipList = document.getElementById('ip-list');
-            const resultCount = document.getElementById('result-count');
-            const ipCount = document.getElementById('ip-count');
-            
-            testResults = [];
-            displayedResults = [];
-            showingAll = false;
-            currentDisplayType = 'loading';
-            
-            progressBar.style.width = '0%';
-            
-            const ipSourceName = getSourceName(ipSource);
-            progressText.textContent = '正在加载 ' + ipSourceName + ' IP列表...';
-            ipList.innerHTML = '<div class="ip-item">正在加载IP列表，请稍候...</div>';
-            
-            // 加载IP列表
-            originalIPs = await loadIPs(ipSource, port);
-            
-            if (originalIPs.length === 0) {
-                console.log(ipSourceName + ' - ' + port + ': 加载IP列表失败');
-                return;
-            }
-            
-            ipCount.textContent = originalIPs.length + ' 个';
-            progressText.textContent = '开始测试端口 ' + port + '...';
-            currentDisplayType = 'testing';
-            
-            // 执行测试
-            const results = await testIPsWithConcurrency(originalIPs, port, 32);
-            testResults = results.sort((a, b) => a.latency - b.latency);
-            
-            currentDisplayType = 'results';
-            progressText.textContent = '完成 - 有效IP: ' + testResults.length + '/' + originalIPs.length + ' (端口: ' + port + ', IP库: ' + ipSourceName + ')';
         }
         
         // 获取IP库名称
@@ -2874,6 +2839,7 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             const backBtn = document.getElementById('back-btn');
             const portSelect = document.getElementById('port-select');
             const ipSourceSelect = document.getElementById('ip-source-select');
+            const autoSelectBtn = document.getElementById('auto-select-btn');
             
             testBtn.disabled = true;
             saveBtn.disabled = true;
@@ -2882,6 +2848,13 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             backBtn.disabled = true;
             portSelect.disabled = true;
             ipSourceSelect.disabled = true;
+            
+            // 禁用自动优选按钮和选项
+            if (autoSelectBtn && !isAutoSelecting) {
+                autoSelectBtn.disabled = true;
+            }
+            const autoOptionBtns = document.querySelectorAll('.auto-option-btn');
+            autoOptionBtns.forEach(btn => btn.disabled = true);
         }
         
         function enableButtons() {
@@ -2890,12 +2863,21 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             const backBtn = document.getElementById('back-btn');
             const portSelect = document.getElementById('port-select');
             const ipSourceSelect = document.getElementById('ip-source-select');
+            const autoSelectBtn = document.getElementById('auto-select-btn');
             
             testBtn.disabled = false;
             editBtn.disabled = false;
             backBtn.disabled = false;
             portSelect.disabled = false;
             ipSourceSelect.disabled = false;
+            
+            // 启用自动优选按钮和选项
+            if (autoSelectBtn) {
+                autoSelectBtn.disabled = false;
+            }
+            const autoOptionBtns = document.querySelectorAll('.auto-option-btn');
+            autoOptionBtns.forEach(btn => btn.disabled = false);
+            
             updateButtonStates();
         }
         
@@ -3245,6 +3227,7 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             return results;
         }
         
+        // 开始测试（修改为支持自动优选调用）
         async function startTest() {
             const testBtn = document.getElementById('test-btn');
             const portSelect = document.getElementById('port-select');
@@ -3264,10 +3247,19 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             localStorage.setItem(StorageKeys.PORT, selectedPort);
             localStorage.setItem(StorageKeys.IP_SOURCE, selectedIPSource);
             
-            testBtn.disabled = true;
-            testBtn.textContent = '加载IP列表...';
-            portSelect.disabled = true;
-            ipSourceSelect.disabled = true;
+            // 如果不是自动优选模式，才禁用按钮
+            if (!isAutoSelecting) {
+                testBtn.disabled = true;
+                testBtn.textContent = '加载IP列表...';
+                portSelect.disabled = true;
+                ipSourceSelect.disabled = true;
+                
+                // 禁用自动优选功能
+                const autoSelectBtn = document.getElementById('auto-select-btn');
+                if (autoSelectBtn) autoSelectBtn.disabled = true;
+                const autoOptionBtns = document.querySelectorAll('.auto-option-btn');
+                autoOptionBtns.forEach(btn => btn.disabled = true);
+            }
             testResults = [];
             displayedResults = []; // 重置显示结果
             showingAll = false; // 重置显示状态
@@ -3356,6 +3348,15 @@ async function bestIP(request, env, txt = 'ADD.txt') {
             testBtn.textContent = '重新测试';
             portSelect.disabled = false;
             ipSourceSelect.disabled = false;
+            
+            // 如果不是自动优选模式，才启用自动优选功能
+            if (!isAutoSelecting) {
+                const autoSelectBtn = document.getElementById('auto-select-btn');
+                if (autoSelectBtn) autoSelectBtn.disabled = false;
+                const autoOptionBtns = document.querySelectorAll('.auto-option-btn');
+                autoOptionBtns.forEach(btn => btn.disabled = false);
+            }
+            
             progressText.textContent = '完成 - 有效IP: ' + testResults.length + '/' + originalIPs.length + ' (端口: ' + selectedPort + ', IP库: ' + ipSourceName + ')';
         }
         
